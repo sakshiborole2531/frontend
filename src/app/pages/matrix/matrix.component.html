@@ -1,0 +1,34 @@
+<div class="pagehead"><div><div class="eb"><span class="scopetag">{{ scope.path().join(' â€º ') }}</span>Analysis</div><h2>Matrix View</h2><div class="q">Inventory by plant (rows) and category (columns) â€” with plant and category totals</div></div></div>
+<filter-bar/>
+@if (m(); as m) {
+<div class="panel mxpanel">
+  <div class="toolbar mxbar">
+    <div class="fgroup"><label>Show</label><select [ngModel]="measure()" (ngModelChange)="measure.set($event)">@for (x of measures(); track x[0]) {<option [value]="x[0]">{{ x[1] }}</option>}</select></div>
+    <div class="fgroup"><label>Percent</label><select [ngModel]="pctMode()" (ngModelChange)="pctMode.set($event)"><option value="none">Values only</option><option value="grand">% of grand total</option><option value="row">% of plant (row)</option><option value="col">% of category (column)</option></select></div>
+    <label class="chk"><input type="checkbox" [ngModel]="subtotals()" (ngModelChange)="subtotals.set($event)"> BU subtotals</label>
+    <div class="fgroup"><label>Colour cells by</label><select [ngModel]="colorBy()" (ngModelChange)="colorBy.set($event)"><option value="rag">Health status (RAG)</option><option value="heat">Value intensity</option><option value="none">No colour</option></select></div>
+    <label class="chk"><input type="checkbox" [ngModel]="hideEmpty()" (ngModelChange)="hideEmpty.set($event)"> Hide empty plants</label>
+  </div>
+  <div class="mxkpis">
+    <div class="k"><span>Grand total</span><b>{{ fmt(m.grand.v) }}</b><i>{{ m.measureLabel }}</i></div>
+    <div class="k"><span>Overall health</span><b class="rag-txt-{{ ragOf(m.grand.share) }}">{{ m.grand.share === null ? 'â€“' : (m.grand.share * 100).toFixed(1) + '%' }}</b><i>share at risk</i></div>
+  </div>
+  @if (colorBy() === 'rag') { <div class="mxlegend"><b>Share at risk:</b><span><em class="rag-g"></em>Green â€” Healthy (&lt; {{ rag.g }}%)</span><span><em class="rag-y"></em>Yellow â€” Watch ({{ rag.g }}â€“{{ rag.y }}%)</span><span><em class="rag-r"></em>Red â€” Action ({{ rag.y }}â€“{{ rag.r }}%)</span><span><em class="rag-dr"></em>Dark red â€” Critical (â‰¥ {{ rag.r }}%)</span></div> }
+  <div class="mxwrap"><table class="mxtbl">
+    <thead><tr><th class="mxr corner">Plant <span>â†“</span>&nbsp; Category <span>â†’</span></th>@for (c of m.columns; track c) {<th class="mxh">{{ c }}<small>{{ pct(m.columnTotals[c].v, m.grand.v) }}</small></th>}<th class="mxh mxt">Total<small>100%</small></th></tr></thead>
+    <tbody>
+      @for (g of groups(); track g.bu) {
+        @if (subtotals() && groups().length > 1) { <tr class="mxgrp"><th [attr.colspan]="m.columns.length + 2">{{ g.bu }}</th></tr> }
+        @for (r of g.rows; track r.plant; let i = $index) {
+          <tr [class.odd]="i % 2"><th class="mxr"><a (click)="scope.goScope(r.bu, r.plant)">{{ r.plant }}</a><span>{{ r.bu }}</span></th>
+            @for (c of m.columns; track c) { <td class="mxc {{ cls(r.cells[c]) }}" [class.heat]="heat(r.cells[c])" [style.--h]="heat(r.cells[c])" [attr.data-nav]="r.cells[c].v ? 1 : null" (click)="r.cells[c].v && drill(r.plant, r.bu, c)">
+              @if (!r.cells[c].v) {<span class="mx0">â€”</span>} @else if (pctMode() === 'none') { {{ fmt(r.cells[c].v) }} } @else {<b>{{ pct(r.cells[c].v, base(r, c)) }}</b><small>{{ fmt(r.cells[c].v) }}</small>}</td> }
+            <td class="mxt {{ cls(r.total) }}">{{ fmt(r.total.v) }}</td></tr> }
+        @if (subtotals() && groups().length > 1) {
+          <tr class="mxsub"><th class="mxr">{{ g.bu }} Business Unit<span>Subtotal Â· {{ g.rows.length }} units</span></th>@for (c of m.columns; track c) {<td class="mxc">{{ fmt(subSum(g, c)) }}</td>}<td class="mxt">{{ fmt(subSum(g, '__total')) }}</td></tr> }
+      }
+    </tbody>
+    <tfoot><tr><th class="mxr">Total<span>{{ rows().length }} units</span></th>@for (c of m.columns; track c) {<td class="mxc">{{ fmt(m.columnTotals[c].v) }}@if (colorBy() === 'rag' && m.columnTotals[c].v) {<i class="dot rag-{{ ragOf(m.columnTotals[c].share) }}"></i>}</td>}<td class="mxt grand">{{ fmt(m.grand.v) }}</td></tr></tfoot>
+  </table></div>
+</div>
+} @else { <div class="loading">Loadingâ€¦</div> }

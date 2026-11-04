@@ -1,0 +1,58 @@
+<div class="pagehead"><div><div class="eb">Configuration</div><h2>Data Entry &amp; Quality</h2><div class="q">Fix incomplete records and add or edit inventory manually</div></div></div>
+<div class="grid2">
+  <div class="panel"><h2>Data Exceptions by Type</h2><div class="desc">Incomplete data weakens aging, expiry and value KPIs</div>
+    <table class="plain"><tbody>@for (g of groups(); track g[0]) {<tr><td><span class="tag warn">{{ g[0] }}</span></td><td class="num"><b>{{ g[1] }}</b></td></tr>}
+      @empty {<tr><td class="empty">No open data exceptions âœ“</td></tr>}</tbody></table></div>
+  <div class="panel"><h2>Records to Fix ({{ issues().length }})</h2><div class="desc">Fix at source (SAP) or in the form below.</div>
+    <div class="tablewrap short"><table><thead><tr><th>Code</th><th>Batch</th><th>Plant</th><th>Issue</th><th></th></tr></thead><tbody>
+      @for (i of issues().slice(0, 300); track i.id + i.issue) {<tr><td>{{ i.code }}</td><td>{{ i.batch || 'â€“' }}</td><td>{{ i.plant }}</td><td class="wrap"><span class="tag warn">{{ i.issue }}</span></td>
+        <td>@if (auth.can('data.edit')) {<button class="btn secondary small" (click)="edit(i.id)">Fix</button>}</td></tr>}
+      @empty {<tr><td colspan="5" class="empty">Nothing to fix âœ“</td></tr>}</tbody></table></div></div>
+</div>
+@if (auth.can('data.edit')) {
+<div class="gap"></div>
+<div class="panel" id="entryPanel"><h2>{{ editing() ? 'Edit Record' : 'Add Inventory Record' }}</h2><div class="desc">Stock quantities follow SAP stock types: Unrestricted, Quality inspection, Blocked. Plants and storage locations come from Masters.</div>
+  <form class="entry" [formGroup]="form" (ngSubmit)="save()">
+    <div class="fgroup"><label>Plant *</label><select formControlName="plant"><option value="" disabled>Selectâ€¦</option>@for (p of plants(); track p) {<option [value]="p">{{ p }}</option>}</select>@if (bad('plant')) {<div class="err">Plant is required</div>}</div>
+    <div class="fgroup"><label>Material category *</label><select formControlName="matType">@for (c of cats; track c) {<option [value]="c">{{ c }}</option>}</select></div>
+    <div class="fgroup"><label>Storage location</label><input type="text" formControlName="storageLoc" list="slocDL" placeholder="Select or type"><datalist id="slocDL">@for (s of slocs(); track s) {<option [value]="s"></option>}</datalist></div>
+    @if (isCons()) {<div class="fgroup"><label>Department *</label><select formControlName="dept">@for (d of depts; track d) {<option [value]="d">{{ d }}</option>}</select></div>} @else {<div></div>}
+    <div class="fgroup"><label>Material code *</label><input type="text" formControlName="code">@if (bad('code')) {<div class="err">Required, max 40 characters</div>}</div>
+    <div class="fgroup"><label>Material description *</label><input type="text" formControlName="name">@if (bad('name')) {<div class="err">Required</div>}</div>
+    <div class="fgroup"><label>Batch / Lot</label><input type="text" formControlName="batch"></div>
+    <div class="fgroup"><label>UOM</label><input type="text" formControlName="uom" placeholder="KG / NOS / LTR"></div>
+    <div class="fgroup"><label>Unit cost (â‚¹) *</label><input type="number" step="any" min="0" formControlName="unitCost">@if (bad('unitCost')) {<div class="err">Enter a cost â‰¥ 0</div>}</div>
+    <div class="fgroup"><label>Unrestricted qty</label><input type="number" step="any" min="0" formControlName="unrestrictedQty"></div>
+    <div class="fgroup"><label>Quality inspection qty</label><input type="number" step="any" min="0" formControlName="qualityQty"></div>
+    <div class="fgroup"><label>Blocked qty</label><input type="number" step="any" min="0" formControlName="blockedQty"></div>
+    <div class="fgroup"><label>Block reason</label><input type="text" formControlName="blockReason"></div>
+    @if (isCons()) {<div class="fgroup"><label>Sub-category</label><input type="text" formControlName="subCat" placeholder="e.g. Filters, Bearings"></div>}
+    <div class="fgroup"><label>GR posting date (in stock since)</label><input type="date" formControlName="receiptDate"></div>
+    <div class="fgroup"><label>Lying since (defaults to GR)</label><input type="date" formControlName="lyingSince"></div>
+    <div class="fgroup"><label>Last posting date (consumption)</label><input type="date" formControlName="lastIssueDate"></div>
+    <div class="fgroup"><label>Date of manufacture</label><input type="date" formControlName="mfgDate"></div>
+    <div class="fgroup"><label>SLED/BBD (expiry)</label><input type="date" formControlName="expiryDate"></div>
+    <div class="fgroup"><label>Date type</label><select formControlName="dateType"><option>Expiry</option><option>Retest</option></select></div>
+    <div class="fgroup full"><label>Remarks</label><input type="text" formControlName="remarks"></div>
+    @if (form.errors?.['expiryBeforeMfg']) {<div class="full err">SLED/BBD cannot be earlier than the Date of Manufacture.</div>}
+    @if (form.errors?.['noQty'] && form.touched) {<div class="full err">Enter at least one quantity greater than zero.</div>}
+    @if (error()) {<div class="full autherr">{{ error() }}</div>}
+    <div class="actions"><button type="submit" class="btn">{{ editing() ? 'Update record' : 'Add record' }}</button>@if (editing()) {<button type="button" class="btn secondary" (click)="cancel()">Cancel</button>}</div>
+  </form></div>
+}
+<div class="panel"><h2>All Inventory Records</h2>
+  <div class="tablewrap"><table mat-table [dataSource]="ds">
+    <ng-container matColumnDef="bu"><th mat-header-cell *matHeaderCellDef>BU</th><td mat-cell *matCellDef="let x">{{ x.bu }}</td></ng-container>
+    <ng-container matColumnDef="plant"><th mat-header-cell *matHeaderCellDef>Plant</th><td mat-cell *matCellDef="let x">{{ x.plant }}</td></ng-container>
+    <ng-container matColumnDef="cat"><th mat-header-cell *matHeaderCellDef>Category</th><td mat-cell *matCellDef="let x">{{ x.matType }}{{ x.dept ? ' (' + x.dept + ')' : '' }}</td></ng-container>
+    <ng-container matColumnDef="code"><th mat-header-cell *matHeaderCellDef>Code</th><td mat-cell *matCellDef="let x">{{ x.code }}</td></ng-container>
+    <ng-container matColumnDef="name"><th mat-header-cell *matHeaderCellDef>Description</th><td mat-cell *matCellDef="let x">{{ x.name }}</td></ng-container>
+    <ng-container matColumnDef="batch"><th mat-header-cell *matHeaderCellDef>Batch</th><td mat-cell *matCellDef="let x">{{ x.batch || 'â€“' }}</td></ng-container>
+    <ng-container matColumnDef="qty"><th mat-header-cell *matHeaderCellDef class="num">U / Q / B qty</th><td mat-cell *matCellDef="let x" class="num">{{ x.unrestrictedQty | qty }} / {{ x.qualityQty | qty }} / {{ x.blockedQty | qty }}</td></ng-container>
+    <ng-container matColumnDef="value"><th mat-header-cell *matHeaderCellDef class="num">Value</th><td mat-cell *matCellDef="let x" class="num">{{ x.value | inr }}</td></ng-container>
+    <ng-container matColumnDef="status"><th mat-header-cell *matHeaderCellDef>Status</th><td mat-cell *matCellDef="let x"><status-tags [x]="x"/></td></ng-container>
+    <ng-container matColumnDef="ops"><th mat-header-cell *matHeaderCellDef></th><td mat-cell *matCellDef="let x" style="white-space:nowrap">@if (auth.can('data.edit')) {<button class="btn secondary small" (click)="edit(x.id)">Edit</button> <button class="btn danger small" (click)="remove(x)">Delete</button>}</td></ng-container>
+    <tr mat-header-row *matHeaderRowDef="['bu','plant','cat','code','name','batch','qty','value','status','ops']; sticky: true"></tr>
+    <tr mat-row *matRowDef="let x; columns: ['bu','plant','cat','code','name','batch','qty','value','status','ops']"></tr>
+  </table></div>
+  <mat-paginator [pageSizeOptions]="[25, 50, 100]"></mat-paginator></div>

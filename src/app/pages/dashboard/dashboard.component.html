@@ -1,0 +1,146 @@
+@if (d(); as d) {
+<div class="hero lvl-{{ d.level }}">
+  <div class="hero-l">
+    <div class="hero-eb"><span class="lvlchip">{{ d.level === 'org' ? 'Entire Organization' : d.level === 'bu' ? 'Business Unit' : 'Unit' }}</span>
+      @if (d.level !== 'org') { <span class="crumbs2">@for (p of scope.path(); track p; let i = $index; let last = $last) { @if (!last) {<a (click)="up(i)">{{ p }}</a><i>â€º</i>} @else {<b>{{ p }}</b>} }</span> }</div>
+    <h1>{{ scope.title() }}</h1>
+    <div class="hero-meta">{{ tot().n }} batches Â· {{ tot().materials }} materials Â· data source {{ scope.settings()['sync.source'] || 'â€”' }}</div>
+  </div>
+  <div class="hero-r">
+    <span>Total inventory value</span><b>{{ tot().v | inr }}</b>
+    <div class="herobar"><i class="c-u" [style.width.%]="w(tot().u, tot().v)"></i><i class="c-q" [style.width.%]="w(tot().q, tot().v)"></i><i class="c-b" [style.width.%]="w(tot().b, tot().v)"></i></div>
+    <div class="herolg"><span><i class="c-u"></i>Unrestricted {{ pctT(tot().u) }}</span><span><i class="c-q"></i>Quality {{ pctT(tot().q) }}</span><span><i class="c-b"></i>Blocked {{ pctT(tot().b) }}</span></div>
+  </div>
+</div>
+
+<div class="kidwrap"><div class="kidtitle">{{ d.level === 'org' ? 'Business Units' : d.level === 'bu' ? 'Units in ' + d.bu : 'Storage locations in ' + d.plant }}<span>{{ d.level === 'unit' ? 'value by location' : 'click to drill down' }}</span></div>
+  <div class="kids" [class.few]="d.children.length <= 3">
+    @for (k of d.children; track k.key; let i = $index) {
+      <div class="kid c{{ i % 6 }}" (click)="kid(k)">
+        <div class="kidh"><span class="kidic"><ic [n]="k.kind === 'bu' ? 'factory' : k.kind === 'unit' ? 'place' : 'archive'"/></span><div><b>{{ k.key }}{{ k.kind === 'bu' ? ' Business Unit' : '' }}</b><span>{{ k.sub }}</span></div>@if (k.kind !== 'loc') {<span class="kidgo">â€º</span>}</div>
+        <div class="kidv">{{ k.agg.v | inr }}<small>{{ pctT(k.agg.v) }}</small></div>
+        <div class="kidbar"><i class="c-u" [style.width.%]="w(k.agg.u, k.agg.v)"></i><i class="c-q" [style.width.%]="w(k.agg.q, k.agg.v)"></i><i class="c-b" [style.width.%]="w(k.agg.b, k.agg.v)"></i></div>
+        <div class="kidm"><span><em>Aged</em>{{ k.agg.aged | inr }}</span><span><em>Expiring</em>{{ k.agg.exp + k.agg.expd | inr }}</span><span><em>Blocked</em>{{ k.agg.b | inr }}</span>
+          @if (k.kind !== 'loc') {<span><em>Actions</em>{{ k.open }}@if (k.overdue) {<b class="down"> Â· {{ k.overdue }} late</b>}</span>} @else {<span><em>Batches</em>{{ k.agg.n }}</span>}</div>
+      </div>
+    } @empty { <div class="empty">No data at this level â€” import inventory or load sample data (Configuration â†’ Import / Export).</div> }
+  </div></div>
+
+<filter-bar/>
+
+<div class="dsec"><span class="dsn">1</span><div><h3>Visibility</h3><p>What inventory do we have? How much? What is available for use? How much is under Quality or Blocked status? How long has it been lying?</p></div></div>
+<div class="sectionlabel">Goods inventory</div>
+<div class="krow k6">
+  <div class="kcard k-navy" (click)="go('/inventory/goods')"><div class="khead"><span class="kic"><ic n="database" [size]="17"/></span><span>Total Inventory Value</span></div><div class="kval">{{ tot().v | inr }}</div><div class="ksub">{{ tot().n }} batches Â· {{ tot().materials }} materials</div></div>
+  <div class="kcard k-green" (click)="go('/inventory/status', { st: 'Unrestricted' })"><div class="khead"><span class="kic"><ic n="check_circle" [size]="17"/></span><span>Unrestricted Stock</span></div><div class="kval green">{{ tot().u | inr }}</div><div class="ksub"><b>{{ pctT(tot().u) }}</b> available for use</div></div>
+  <div class="kcard k-blue" (click)="go('/inventory/status', { st: 'Quality' })"><div class="khead"><span class="kic"><ic n="science" [size]="17"/></span><span>Quality Stock</span></div><div class="kval blue">{{ tot().q | inr }}</div><div class="ksub">under inspection</div></div>
+  <div class="kcard k-red" (click)="go('/inventory/status', { st: 'Blocked' })"><div class="khead"><span class="kic"><ic n="block" [size]="17"/></span><span>Blocked Stock</span></div><div class="kval red">{{ tot().b | inr }}</div><div class="ksub"><b>{{ pctT(tot().b) }}</b> of value</div></div>
+  <div class="kcard k-amber" (click)="go('/inventory/aging', { bucket: '>180' })"><div class="khead"><span class="kic"><ic n="schedule" [size]="17"/></span><span>Inventory Aging <small>&gt;{{ t().agingDays }} days</small></span></div><div class="kval amber">{{ tot().aged | inr }}</div><div class="ksub">{{ tot().agedN }} batches</div></div>
+  <div class="kcard k-red" (click)="go('/inventory/expiry')"><div class="khead"><span class="kic"><ic n="event" [size]="17"/></span><span>Expiry <small>â‰¤{{ t().expiryDays }} days</small></span></div><div class="kval red">{{ tot().exp + tot().expd | inr }}</div><div class="ksub">{{ tot().expN + tot().expdN }} batches Â· {{ tot().expdN }} expired</div></div>
+</div>
+<div class="sectionlabel">Consumable inventory</div>
+<div class="krow k4">
+  <div class="kcard k-navy" (click)="go('/inventory/cons')"><div class="khead"><span class="kic"><ic n="build" [size]="17"/></span><span>Consumable Inventory Value</span></div><div class="kval">{{ tot().cons | inr }}</div><div class="ksub">{{ tot().consN }} items Â· 5 departments</div></div>
+  <div class="kcard k-purple" (click)="go('/inventory/cons', { cs: 'Idle' })"><div class="khead"><span class="kic"><ic n="hourglass_empty" [size]="17"/></span><span>Long-Lying / Non-Moving</span></div><div class="kval purple">{{ tot().idleN }}</div><div class="ksub">{{ tot().idle | inr }} idle value</div></div>
+  <div class="kcard k-red" (click)="go('/actions/queue')"><div class="khead"><span class="kic"><ic n="priority_high" [size]="17"/></span><span>Exceptions</span></div><div class="kval red">{{ tot().exc }}</div><div class="ksub">{{ tot().excV | inr }} at risk Â· {{ tot().p1 }} P1</div></div>
+  <div class="kcard k-green" (click)="go('/actions/open')"><div class="khead"><span class="kic"><ic n="task_alt" [size]="17"/></span><span>Open Actions</span></div><div class="kval green">{{ d.pipeline.open }}</div><div class="ksub">{{ d.pipeline.overdue }} overdue Â· {{ d.pipeline.closureRate }}% closure rate</div></div>
+</div>
+<div class="dgrid4">
+  <div class="panel"><h2>Inventory by Category &amp; Stock Status</h2><div class="desc">RM Â· INT Â· SFG Â· FG Â· RS Â· PM Â· Consumables â€” click to drill down</div>
+    <div class="legend"><span><i class="c-u"></i>Unrestricted</span><span><i class="c-q"></i>Quality</span><span><i class="c-b"></i>Blocked</span></div>
+    @for (r of d.byCategory; track r.category) {
+      <div class="cbar" (click)="r.category === 'Consumable' ? go('/inventory/cons') : go('/inventory/goods', { cat: r.category })"><div class="cbl"><span>{{ r.category }}</span><b>{{ r.v | inr }}</b><em>{{ pctT(r.v) }}</em></div>
+        <div class="cbt"><i class="c-u" [style.width.%]="w(r.u, maxOf(d.byCategory))"></i><i class="c-q" [style.width.%]="w(r.q, maxOf(d.byCategory))"></i><i class="c-b" [style.width.%]="w(r.b, maxOf(d.byCategory))"></i></div></div> }
+  </div>
+  <div class="panel"><h2>Inventory Ageing Profile</h2><div class="desc">Value by days since GR posting / lying since</div><div class="chartbox" style="height:230px">@if (ageChart(); as c) {<canvas [chart]="c"></canvas>}</div></div>
+  <div class="panel"><h2>Expiry &amp; Retest Exposure</h2><div class="desc">Remaining shelf life â‰¤{{ t().expiryDays }} days</div>
+    @for (b of d.expiryBands; track b.band; let i = $index) {
+      <div class="band" (click)="go('/inventory/expiry', { band: b.band })"><div class="row"><b>{{ b.band === 'Expired' ? 'Already expired' : b.band + ' days' }}</b><span>{{ b.v | inr }} Â· {{ b.n }} batches</span></div>
+        <div class="trk"><div class="fill" [style.width.%]="w(b.v, maxOf(d.expiryBands))" [style.background]="bandColor(i)"></div></div></div> }
+  </div>
+  <div class="panel"><h2>Consumables by Department</h2><div class="desc">Value Â· items Â· long-lying &gt;{{ t().longLyingDays }}d</div>
+    @for (r of d.consumablesByDept; track r.dept) {
+      <div class="cbar" (click)="go('/inventory/cons', { dept: r.dept })"><div class="cbl"><span>{{ r.dept === 'QC' ? 'Quality Control' : r.dept }}</span><b>{{ r.v | inr }}</b><em>{{ r.n }} items @if (r.idle) {Â· <span class="down">{{ r.idle }} idle</span>}</em></div>
+        <div class="cbt"><i [style.width.%]="w(r.v, maxOf(d.consumablesByDept))" [style.background]="deptColor(r.dept)"></i></div></div> }
+  </div>
+</div>
+
+<div class="dsec"><span class="dsn">2</span><div><h3>Identification &amp; Prioritization</h3><p>Which inventory is approaching expiry? What is aged, blocked, restricted, slow-moving or high-value? What needs attention first?</p></div></div>
+<div class="dgrid3">
+  <div class="panel"><h2>Key Alerts &amp; Exceptions</h2>
+    <div class="alerts">@for (a of d.alerts; track a.key) {
+      <div class="arow" (click)="alert(a)"><span class="aic {{ sevClass(a.severity) }}"><ic [n]="alertIcon(a.key)" [size]="16"/></span><div><b>{{ a.label }}</b><span>{{ a.n }} batches Â· {{ a.v | inr }}</span></div><span class="sev {{ sevClass(a.severity) }}">{{ a.severity }}</span></div> }</div></div>
+  <div class="panel"><h2>Priority Exceptions <span class="pcount"><span class="tag p1">P1 {{ tot().p1 }}</span><span class="tag p2">P2 {{ tot().p2 }}</span><span class="tag p3">P3 {{ tot().p3 }}</span></span></h2>
+    <div class="desc">Ranked by risk Ã— value Â· {{ tot().exc }} exceptions Â· {{ tot().excV | inr }} at risk</div>
+    <div class="tablewrap" style="max-height:330px"><table><thead><tr><th>Pri.</th><th>Material / batch</th><th>{{ d.level === 'unit' ? 'Location' : 'Unit' }}</th><th>Exception</th><th class="num">Value</th><th>Owner</th></tr></thead><tbody>
+      @for (e of d.topExceptions; track e.item.id) {
+        <tr (click)="open(e.item)" style="cursor:pointer"><td><prio-tag [p]="e.item.prio"/></td><td><b>{{ e.item.name }}</b><div class="hint">{{ e.item.code }} Â· {{ e.item.batch || 'â€“' }}</div></td>
+          <td>{{ d.level === 'unit' ? (e.item.storageLoc || 'â€“') : e.item.plant }}</td><td><flag-tags [flags]="realFlags(e.item.flags).slice(0, 1)"/>@if (realFlags(e.item.flags).length > 1) {<span class="hint"> +{{ realFlags(e.item.flags).length - 1 }}</span>}</td>
+          <td class="num"><b>{{ e.item.value | inr }}</b></td><td>@if (e.owned) {<span class="tag ok">Owned</span>} @else if (auth.can('action.create')) {<button class="btn small" (click)="assign(e.item, $event)">Assign</button>} @else {â€“}</td></tr>
+      } @empty { <tr><td colspan="6" class="empty">No exceptions âœ“</td></tr> }
+    </tbody></table></div></div>
+  <div class="panel"><h2>FIFO / FEFO Compliance</h2>
+    <div class="donut sm">@if (fefoChart(); as c) {<canvas [chart]="c"></canvas>}<div class="dcenter"><b>{{ d.fefo.pct.toFixed(1) }}%</b><span>Compliant</span></div></div>
+    <div class="flegend"><div><i style="background:#22a35a"></i>Compliant<b>{{ d.fefo.ok }}</b></div><div (click)="setTab('fefo')"><i style="background:#f59e0b"></i>Exceptions<b>{{ d.fefo.fail }}</b></div><div><i style="background:#c3c9d3"></i>Not applicable<b>{{ d.fefo.na }}</b></div></div>
+    <div class="hint" style="margin-top:6px">Target â‰¥ 95%. FEFO by expiry/retest date; FIFO by GR date where there is no expiry.</div></div>
+</div>
+
+<div class="dsec"><span class="dsn">3</span><div><h3>Ownership â†’ Action â†’ Closure</h3><p>Which department owns the inventory? What action is required and by when? Is it being closed?</p></div></div>
+<div class="pipe">
+  <div class="pstep amber" (click)="go('/actions/queue')"><b>{{ d.pipeline.awaiting }}</b><span>Awaiting owner</span></div><i class="parr">â€º</i>
+  <div class="pstep blue" (click)="go('/actions/open', { stage: 'Owned' })"><b>{{ d.pipeline.owned }}</b><span>Owned</span></div><i class="parr">â€º</i>
+  <div class="pstep indigo" (click)="go('/actions/open', { stage: 'In Action' })"><b>{{ d.pipeline.inAction }}</b><span>In action</span></div><i class="parr">â€º</i>
+  <div class="pstep red" (click)="go('/actions/open', { due: 'Overdue' })"><b>{{ d.pipeline.overdue }}</b><span>Overdue Â· escalated</span></div><i class="parr">â€º</i>
+  <div class="pstep green" (click)="go('/actions/closed')"><b>{{ d.pipeline.closedMtd }}</b><span>Closed this month</span></div><i class="parr">â€º</i>
+  <div class="pstep navy"><b>{{ d.pipeline.closureRate }}%</b><span>Closure rate</span></div>
+</div>
+<div class="grid2">
+  <div class="panel"><h2>Ownership by Function</h2><div class="desc">Open, overdue and closed actions per responsible function</div>
+    <table class="plain"><thead><tr><th>Function</th><th class="num">Open</th><th class="num">Overdue</th><th class="num">Closed</th></tr></thead><tbody>
+      @for (r of d.byFunction; track r.fn) { <tr (click)="go('/actions/open', { fn: r.fn })" style="cursor:pointer"><td><b>{{ r.fn }}</b></td><td class="num">{{ r.open }}</td><td class="num" [style.color]="r.overdue ? 'var(--red)' : ''">{{ r.overdue }}</td><td class="num">{{ r.closed }}</td></tr> }
+      @empty { <tr><td colspan="4" class="empty">No actions yet</td></tr> }</tbody></table></div>
+  <div class="panel"><h2>Upcoming &amp; Overdue Actions</h2><div class="desc">Earliest target date first Â· overdue â†’ Function Head, &gt;14 days â†’ Plant Head</div>
+    <table class="plain"><thead><tr><th>Action</th><th>Owner</th><th>Target</th><th>Status</th></tr></thead><tbody>
+      @for (a of d.upcoming; track a.id) { <tr><td class="wrap"><b>{{ a.plan }}</b><div class="hint">{{ a.name }} {{ a.plant ? 'Â· ' + a.plant : '' }}</div></td><td>{{ a.functionName }}<div class="hint">{{ a.person }}</div></td>
+        <td [style.color]="a.overdue ? 'var(--red)' : ''" [style.fontWeight]="a.overdue ? 700 : 400">{{ a.targetDate | dt }}</td><td><span class="tag {{ a.overdue ? 'bad' : 'ok' }}">{{ a.escalation }}</span></td></tr> }
+      @empty { <tr><td colspan="4" class="empty">No open actions</td></tr> }</tbody></table></div>
+</div>
+
+<div class="dsec"><span class="dsn">4</span><div><h3>{{ d.level === 'org' ? 'Business Unit-wise comparison' : d.level === 'bu' ? 'Unit-wise comparison â€” ' + d.bu : 'Storage-location position â€” ' + d.plant }}</h3><p>Click a row to drill down.</p></div></div>
+<div class="panel"><div class="tablewrap" style="max-height:none"><table><thead><tr><th>{{ d.level === 'org' ? 'Business unit' : d.level === 'bu' ? 'Unit' : 'Location' }}</th><th class="num">Batches</th><th class="num">Total value</th><th class="num">Share</th><th class="num">Unrestricted</th><th class="num">Quality</th><th class="num">Blocked</th><th class="num">Aged</th><th class="num">Expiry â‰¤{{ t().expiryDays }}d</th><th class="num">Expired</th><th class="num">Exceptions</th><th class="num">Open / overdue</th></tr></thead><tbody>
+  @for (k of d.children; track k.key) { <tr (click)="kid(k)" style="cursor:pointer"><td><b>{{ k.key }}</b></td><td class="num">{{ k.agg.n }}</td><td class="num"><b>{{ k.agg.v | inr }}</b></td><td class="num">{{ pctT(k.agg.v) }}</td><td class="num">{{ k.agg.u | inr }}</td><td class="num">{{ k.agg.q | inr }}</td><td class="num" style="color:var(--red)">{{ k.agg.b | inr }}</td><td class="num">{{ k.agg.aged | inr }}</td><td class="num">{{ k.agg.exp | inr }}</td><td class="num">{{ k.agg.expd | inr }}</td><td class="num">{{ k.agg.exc }}</td><td class="num">{{ k.open }} / <span style="color:var(--red)">{{ k.overdue }}</span></td></tr> }
+  <tr class="totrow"><td>Total â€” {{ scope.title() }}</td><td class="num">{{ tot().n }}</td><td class="num">{{ tot().v | inr }}</td><td class="num">100%</td><td class="num">{{ tot().u | inr }}</td><td class="num">{{ tot().q | inr }}</td><td class="num">{{ tot().b | inr }}</td><td class="num">{{ tot().aged | inr }}</td><td class="num">{{ tot().exp | inr }}</td><td class="num">{{ tot().expd | inr }}</td><td class="num">{{ tot().exc }}</td><td class="num">{{ d.pipeline.open }} / {{ d.pipeline.overdue }}</td></tr>
+</tbody></table></div></div>
+
+<div class="dsec"><span class="dsn">5</span><div><h3>Material &amp; Batch Register</h3><p>Search, filter and drill down: material â†’ batch â†’ detailed record</p></div></div>
+<div class="panel" id="regPanel">
+  <div class="reghead">
+    <div class="fsel" style="height:36px;flex:1;min-width:240px;max-width:380px"><span class="ic"><ic n="search" [size]="16"/></span><input type="text" placeholder="Search material, batch, unit, storage locationâ€¦" [ngModel]="regQ()" (ngModelChange)="regQ.set($event); applyReg()"></div>
+    <span style="flex:1"></span>
+    <div class="seg-tabs">@for (tb of [['all','All Inventory'],['aged','Aged & Slow'],['blocked','Blocked / QC'],['expiry','Expiry Risk'],['hv','High Value'],['fefo','FIFO / FEFO']]; track tb[0]) {
+      <button [class.on]="regTab() === tb[0]" (click)="setTab(tb[0])">{{ tb[1] }}</button> }</div>
+    @if (auth.can('export.data')) { <button class="btn secondary small" (click)="exportReg()"><ic n="download" [size]="15"/> Export</button> }
+  </div>
+  <div class="tablewrap" style="max-height:none">
+    <table mat-table [dataSource]="ds" matSort class="regtbl">
+      <ng-container matColumnDef="plant"><th mat-header-cell *matHeaderCellDef mat-sort-header>Plant / Site</th><td mat-cell *matCellDef="let x">{{ x.plant }}</td></ng-container>
+      <ng-container matColumnDef="code"><th mat-header-cell *matHeaderCellDef mat-sort-header>Material / Batch</th><td mat-cell *matCellDef="let x"><b>{{ x.code }}</b> / {{ x.batch || 'â€“' }}</td></ng-container>
+      <ng-container matColumnDef="name"><th mat-header-cell *matHeaderCellDef mat-sort-header>Description</th><td mat-cell *matCellDef="let x">{{ x.name }}</td></ng-container>
+      <ng-container matColumnDef="matType"><th mat-header-cell *matHeaderCellDef mat-sort-header>Category</th><td mat-cell *matCellDef="let x"><span class="tag mat" [title]="x.matType">{{ short[x.matType] }}</span></td></ng-container>
+      <ng-container matColumnDef="qty"><th mat-header-cell *matHeaderCellDef mat-sort-header class="num">Quantity</th><td mat-cell *matCellDef="let x" class="num">{{ x.qty | qty }}</td></ng-container>
+      <ng-container matColumnDef="uom"><th mat-header-cell *matHeaderCellDef>UOM</th><td mat-cell *matCellDef="let x">{{ x.uom || 'â€“' }}</td></ng-container>
+      <ng-container matColumnDef="value"><th mat-header-cell *matHeaderCellDef mat-sort-header class="num">Value</th><td mat-cell *matCellDef="let x" class="num"><b>{{ x.value | inr }}</b></td></ng-container>
+      <ng-container matColumnDef="age"><th mat-header-cell *matHeaderCellDef mat-sort-header class="num">Age (days)</th><td mat-cell *matCellDef="let x" class="num">{{ x.age ?? 'â€“' }}</td></ng-container>
+      <ng-container matColumnDef="rsl"><th mat-header-cell *matHeaderCellDef mat-sort-header class="num">Expiry (days)</th><td mat-cell *matCellDef="let x" class="num" [style.color]="x.rsl !== null && x.rsl <= 30 ? 'var(--red)' : x.rsl !== null && x.rsl <= 90 ? 'var(--amber)' : ''">{{ x.rsl ?? 'â€“' }}</td></ng-container>
+      <ng-container matColumnDef="status"><th mat-header-cell *matHeaderCellDef mat-sort-header>Status</th><td mat-cell *matCellDef="let x"><span class="dotst {{ invStatus(x)[1] }}"></span>{{ invStatus(x)[0] }}</td></ng-container>
+      <ng-container matColumnDef="movement"><th mat-header-cell *matHeaderCellDef mat-sort-header>Movement</th><td mat-cell *matCellDef="let x"><span class="tx {{ x.movement === 'Non-moving' ? 'bad' : x.movement === 'Slow-moving' ? 'warn' : 'mute' }}">{{ x.movement }}</span></td></ng-container>
+      <ng-container matColumnDef="fefo"><th mat-header-cell *matHeaderCellDef mat-sort-header>FIFO / FEFO</th><td mat-cell *matCellDef="let x"><span class="tx {{ fefo(x) === 'FAIL' ? 'bad' : fefo(x) === 'OK' ? 'ok' : 'mute' }}">{{ fefo(x) === 'FAIL' ? 'FEFO Fail' : fefo(x) === 'OK' ? 'Compliant' : 'N/A' }}</span></td></ng-container>
+      <ng-container matColumnDef="prio"><th mat-header-cell *matHeaderCellDef mat-sort-header>Priority</th><td mat-cell *matCellDef="let x"><prio-tag [p]="x.prio"/></td></ng-container>
+      <tr mat-header-row *matHeaderRowDef="cols; sticky: true"></tr>
+      <tr mat-row *matRowDef="let x; columns: cols" (click)="open(x)" style="cursor:pointer"></tr>
+      <tr class="mat-row" *matNoDataRow><td class="empty" [attr.colspan]="cols.length">No records match</td></tr>
+    </table>
+  </div>
+  <mat-paginator [pageSizeOptions]="[25, 50, 100, 500]" showFirstLastButtons></mat-paginator>
+</div>
+} @else { <div class="loading">Loading dashboardâ€¦</div> }

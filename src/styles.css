@@ -1,0 +1,31 @@
+/* Integration layer only: the original dashboard stylesheet (src/legacy.css) is used unchanged.
+   These rules adapt Angular Material components so they sit inside the original design system. */
+html, body { height: 100%; }
+app-root { display: block; }
+.mat-mdc-dialog-container .mdc-dialog__surface { border-radius: 16px !important; background: var(--surface) !important; color: var(--text); }
+.mat-mdc-dialog-content { max-height: 75vh !important; color: var(--text) !important; }
+.mat-mdc-table { background: transparent !important; font-family: var(--font) !important; }
+.mat-mdc-header-cell { font-family: var(--font) !important; }
+.mat-mdc-paginator { background: transparent !important; color: var(--mute) !important; font-family: var(--font) !important; }
+.mat-mdc-snack-bar-container .mdc-snackbar__surface { background: var(--navy) !important; border-radius: 12px !important; }
+.mat-mdc-snack-bar-container .mdc-snackbar__label { color: var(--surface) !important; font-family: var(--font); font-weight: 600; }
+.mat-mdc-form-field { font-family: var(--font) !important; width: 100%; }
+.mat-mdc-tab-group, .mat-mdc-tab { font-family: var(--font) !important; }
+.mat-mdc-progress-bar { --mdc-linear-progress-active-indicator-color: var(--orange); }
+.err { color: var(--red); font-size: 11.5px; font-weight: 600; margin-top: 2px; }
+input.ng-invalid.ng-touched, select.ng-invalid.ng-touched, textarea.ng-invalid.ng-touched { border-color: var(--red) !important; }
+.loading { padding: 40px; text-align: center; color: var(--mute); }
+
+/* Sidebar · database-driven Masters groups (same look as the existing sitem / ssub entries) */
+.sitem.mgrp .mcnt { margin-left: auto; font-size: 10.5px; font-weight: 700; border-radius: 10px; padding: 1px 7px; background: var(--surface2); color: var(--mute); }
+.sitem.mgrp .mcnt + .chev { margin-left: 6px; }
+.sitem.mgrp .chev { padding: 2px 4px; border-radius: 5px; }
+.sitem.mgrp .chev:hover { background: var(--surface2); }
+.sitem.mgrp.grpon { background: var(--orange-bg); }
+.ssub.mlist { max-height: 280px; overflow-y: auto; overscroll-behavior: contain; }
+.ssub.mlist button .mlbl { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ssub.mlist button .cnt { max-width: 90px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: none; }
+.ssub.mlist .mempty { font-size: 12px; color: var(--mute); font-style: italic; padding: 6px 10px; }
+.sidesec .mretry { float: right; border: none; background: none; color: var(--orange); font-size: 10px; font-weight: 700; letter-spacing: .04em; text-transform: none; cursor: pointer; padding: 0; }
+body.sidemini .sitem.mgrp .mcnt { display: none; }
+@media (max-width: 980px) { body.sidemini .sitem.mgrp .mcnt { display: inline; } }

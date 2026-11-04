@@ -1,0 +1,65 @@
+<header class="top">
+  <div class="logo" routerLink="/dashboard" title="Dashboard"><div class="wm"><b>{{ scope.settings()['companyShort'] || 'UNICHEM' }}</b><span>Laboratories Ltd.</span></div></div>
+  <button class="hamb" (click)="hamb()" aria-label="Toggle menu" title="Collapse / expand menu">â˜°</button>
+  <div class="apptitle"><b>INVENTORY MANAGEMENT</b><span>Management dashboard Â· {{ scope.bus().join(' & ') }}</span></div>
+  <span class="flex1"></span>
+  <span class="syncpill" title="Data source"><span class="dot ok"></span><span class="lbl">{{ scope.settings()['sync.source'] || 'No data' }} Â· {{ fmtDT(scope.settings()['sync.lastRefresh']) }}</span></span>
+  @if (auth.can('view.inventory')) { <button class="hbtn" routerLink="/matrix" [class.on]="url().startsWith('/matrix')" title="Matrix view â€” plants Ã— categories"><ic n="grid_on" [size]="16"/><span class="lbl">Matrix view</span></button> }
+  <button class="hbtn" (click)="toggleTheme()"><ic [n]="dark() ? 'light_mode' : 'dark_mode'" [size]="16"/><span class="lbl">{{ dark() ? 'Light' : 'Dark' }}</span></button>
+  <button class="hbtn icon" (click)="refresh()" title="Refresh data"><ic n="refresh" [size]="16"/></button>
+  <div class="userchip" routerLink="/profile" title="My profile">
+    <div class="nm"><b>{{ auth.me()?.name }}</b><span>{{ auth.me()?.location }}{{ auth.me()?.location ? ' Â· ' : '' }}{{ auth.me()?.roleLabel }}</span></div>
+    <div class="avatar">{{ initials() }}</div></div>
+  <button class="hbtn icon" (click)="signOut()" title="Sign out"><ic n="logout" [size]="17"/></button>
+</header>
+<div class="shell">
+  <aside class="side">
+    @if (auth.can('view.inventory')) {
+      <div class="sidesec">Organization</div>
+      <button class="sitem" [class.on]="scope.level() === 'org' && onDash()" [class.inpath]="scope.level() === 'org' && !onDash()" (click)="goScope('All')" title="Entire organization">
+        <span class="ic"><ic n="apartment" [size]="16"/></span>{{ scope.settings()['companyShort'] ? 'Unichem' : 'Organization' }}<span class="lvl">ORG</span></button>
+      <div class="tree">
+        @for (b of scope.bus(); track b; let i = $index) {
+          <button class="tnode bu" [class.on]="scope.filter().bu === b && scope.filter().plant === 'All' && onDash()" [class.inpath]="scope.filter().bu === b" (click)="goScope(b)">
+            <span class="tic"><ic [n]="i === 0 ? 'factory' : 'layers'" [size]="15"/></span>{{ b }}<span class="lvl">BU</span></button>
+          <div class="tunits">
+            @for (u of scope.unitsOf(b); track u) {
+              <button class="tnode unit" [class.on]="scope.filter().plant === u && onDash()" [class.inpath]="scope.filter().plant === u" (click)="goScope(b, u)">{{ u }}</button> }
+          </div> }
+      </div> }
+    <!-- Database-driven masters (GET /api/masters/sidebar); failures never affect the static navigation -->
+    @if (showMasters()) {
+      <div class="sidesec">Masters @if (md.error()) {<button class="mretry" (click)="md.refresh()" [title]="md.error() + ' â€” click to retry'">âŸ³ retry</button>}</div>
+      @for (g of masterGroups; track g.key) {
+        @let list = g.items();
+        <button class="sitem mgrp" [class.open]="masterOpen(g)" [class.grpon]="mastersAt().tab === g.tab" (click)="goMaster(g)" [title]="g.label">
+          <span class="ic"><ic [n]="g.icon" [size]="16"/></span>{{ g.label }}
+          @if (g.count() !== undefined) {<span class="mcnt">{{ g.count() }}</span>}
+          <span class="chev" (click)="masterToggle(g, $event)">â–¾</span></button>
+        @if (masterOpen(g)) { <div class="ssub mlist">
+          @for (m of list; track m.key) {
+            <button [routerLink]="'/masters'" [queryParams]="{ tab: g.tab, q: m.q }" [class.on]="mastersAt().tab === g.tab && mastersAt().q === m.q" [title]="m.title">
+              <span class="mlbl">{{ m.label }}</span>@if (m.tag) {<span class="cnt">{{ m.tag }}</span>}</button>
+          } @empty {
+            <div class="mempty">{{ md.loading() ? 'Loadingâ€¦' : md.error() ? 'Could not load â€” retry above' : 'No active records' }}</div>
+          }
+        </div> }
+      } }
+    @for (g of groups; track g.label) { @if (showGroup(g)) {
+      @if (g.sec) { <div class="sidesec">{{ g.sec }}</div> }
+      @if (!g.items) {
+        <button class="sitem" [routerLink]="g.link" routerLinkActive="on" [title]="g.label"><span class="ic"><ic [n]="g.icon" [size]="16"/></span>{{ g.label }}</button>
+      } @else {
+        <button class="sitem" [class.open]="isOpen(g)" [class.grpon]="mini() && groupOn(g)" (click)="toggle(g.key!)" [title]="g.label"><span class="ic"><ic [n]="g.icon" [size]="16"/></span>{{ g.label }}<span class="chev">â–¾</span></button>
+        @if (isOpen(g)) { <div class="ssub">
+          @for (i of itemsOf(g); track i.link) { <button [routerLink]="i.link" routerLinkActive="on">{{ i.label }}@if (i.cnt && i.cnt()) {<span class="cnt" [class.red]="i.red">{{ i.cnt() }}</span>}</button> }
+        </div> }
+      } } }
+    <div class="sidefoot"><b>OPERATING PHILOSOPHY</b>Visibility â†’ Identification â†’ Prioritization â†’ Ownership â†’ Action â†’ Closure</div>
+  </aside>
+  <div class="scrim" (click)="hamb()"></div>
+  <div class="content">
+    <main><router-outlet/></main>
+    <footer>Unichem Inventory Management Â· Visibility â†’ Identification â†’ Prioritization â†’ Ownership â†’ Action â†’ Closure Â· Data is stored in PostgreSQL and served by the Spring Boot API</footer>
+  </div>
+</div>

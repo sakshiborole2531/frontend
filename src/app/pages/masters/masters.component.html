@@ -1,0 +1,36 @@
+<div class="pagehead"><div><div class="eb">Configuration</div><h2>Masters</h2><div class="q">Plants, storage locations, SAP mappings, owners and thresholds â€” each row is validated and saved to PostgreSQL</div></div></div>
+<div class="panel">
+<mat-tab-group animationDuration="0ms" [selectedIndex]="tab()" (selectedIndexChange)="onTab($event)">
+  @for (d of defs; track d.id) {
+  <mat-tab [label]="d.label + ' (' + (rows()[d.id]?.length ?? 0) + ')'">
+    <div style="padding-top:12px"><div class="desc">{{ d.desc }}</div>
+      <div class="toolbar"><button class="btn small" (click)="add(d)">ï¼‹ Add row</button>
+        <div class="fsel" style="height:32px;min-width:220px"><input type="text" placeholder="Search code or description" [ngModel]="q()[d.id] || ''" (ngModelChange)="setQ(d.id, $event)"></div>
+        <span class="hint">{{ filtered(d).length }} rows</span></div>
+      <div class="tablewrap"><table class="mtable"><thead><tr>@for (c of d.cols; track c.k) {<th>{{ c.l }}{{ c.req ? ' *' : '' }}</th>}<th></th></tr></thead><tbody>
+        @for (r of filtered(d); track r) {
+          <tr>@for (c of d.cols; track c.k) { <td>
+            @switch (c.type) {
+              @case ('select') { <select [(ngModel)]="r[c.k]" (ngModelChange)="touch(r)">@for (o of c.opts!(); track o) {<option [value]="o">{{ o === '' ? 'â€” none â€”' : o }}</option>}</select> }
+              @case ('check') { <label class="switch"><input type="checkbox" [(ngModel)]="r[c.k]" (ngModelChange)="touch(r)"><span class="tr"></span></label> }
+              @case ('number') { <input type="number" [(ngModel)]="r[c.k]" (ngModelChange)="touch(r)" style="width:80px"> }
+              @default { <input [type]="c.type === 'email' ? 'email' : 'text'" [(ngModel)]="r[c.k]" (ngModelChange)="touch(r)" [readonly]="c.key && !r._new" [placeholder]="c.req ? 'required' : ''"
+                [style.borderColor]="c.req && !r[c.k] && dirty.has(r) ? 'var(--red)' : ''"> }
+            }</td> }
+            <td style="white-space:nowrap">@if (dirty.has(r) || r._new) {<button class="btn small" (click)="save(d, r)">Save</button>} <button class="iconbtn" (click)="remove(d, r)" title="Delete row">âœ•</button></td></tr>
+        } @empty { <tr><td [attr.colspan]="d.cols.length + 1" class="empty">No rows</td></tr> }
+      </tbody></table></div></div>
+  </mat-tab> }
+  <mat-tab label="Functions & Action Types">
+    <div class="grid2" style="padding-top:12px">
+      <div><h3>Responsible functions</h3><div class="desc">One per line â€” functions that can own actions.</div><textarea rows="12" style="width:100%" [(ngModel)]="functionsText"></textarea><button class="btn small" (click)="saveList('functions')">Save functions</button></div>
+      <div><h3>Action types</h3><div class="desc">One per line â€” corrective action types offered when assigning an action.</div><textarea rows="12" style="width:100%" [(ngModel)]="actionTypesText"></textarea><button class="btn small" (click)="saveList('actionTypes')">Save action types</button></div>
+    </div>
+  </mat-tab>
+  <mat-tab label="Thresholds & Policy">
+    <div style="padding-top:12px"><div class="desc">Drive identification, prioritization, every KPI card and the security policy.</div>
+      <div class="formgrid">@for (t of thrKeys; track t[0]) {<div class="fgroup"><label>{{ t[1] }}</label><input [type]="t[0].startsWith('company') ? 'text' : 'number'" [(ngModel)]="thresholds[t[0]]" min="1"></div>}</div>
+      <div class="toolbar" style="margin-top:12px"><button class="btn" (click)="saveThresholds()">Save thresholds</button></div></div>
+  </mat-tab>
+</mat-tab-group>
+</div>
