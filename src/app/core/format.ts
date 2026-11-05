@@ -1,15 +1,15 @@
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-/** â‚¹ in Indian units (L = lakh, Cr = crore), as in the original dashboard. */
+/** ₹ in Indian units (L = lakh, Cr = crore), as in the original dashboard. */
 export function fmtV(n: number | null | undefined): string {
   n = n || 0; const a = Math.abs(n);
-  if (a >= 1e7) return 'â‚¹' + (n / 1e7).toFixed(2) + ' Cr';
-  if (a >= 1e5) return 'â‚¹' + (n / 1e5).toFixed(1) + ' L';
-  return 'â‚¹' + Math.round(n).toLocaleString('en-IN');
+  if (a >= 1e7) return '₹' + (n / 1e7).toFixed(2) + ' Cr';
+  if (a >= 1e5) return '₹' + (n / 1e5).toFixed(1) + ' L';
+  return '₹' + Math.round(n).toLocaleString('en-IN');
 }
 export function fmtQ(n: number | null | undefined): string { return (Math.round((n || 0) * 100) / 100).toLocaleString('en-IN'); }
 export function fmtD(s?: string | null): string {
-  if (!s || !/^\d{4}-\d{2}-\d{2}/.test(s)) return 'â€“';
+  if (!s || !/^\d{4}-\d{2}-\d{2}/.test(s)) return '–';
   const [y, m, d] = s.slice(0, 10).split('-'); return `${d} ${MONTHS[+m - 1]} ${y}`;
 }
 export function fmtDT(s?: string | null): string {
@@ -23,7 +23,7 @@ export function sum<T>(a: T[], f: (x: T) => number): number { return a.reduce((s
 export function initials(name?: string): string { return (name || 'U').trim().split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase(); }
 
 export function flagLabel(f: string, t: { expiryDays: number; qualityHoldDays: number; nonMovingDays: number; slowMovingDays: number; longLyingDays: number; agingDays: number }): string {
-  return ({ EXPD: 'Expired', EXP: `Expiry â‰¤${t.expiryDays}d`, BLK: 'Blocked', QH: `Quality hold >${t.qualityHoldDays}d`, NM: `Non-moving >${t.nonMovingDays}d`,
+  return ({ EXPD: 'Expired', EXP: `Expiry ≤${t.expiryDays}d`, BLK: 'Blocked', QH: `Quality hold >${t.qualityHoldDays}d`, NM: `Non-moving >${t.nonMovingDays}d`,
     SLOW: `Slow-moving >${t.slowMovingDays}d`, LL: `Lying >${t.longLyingDays}d`, AGED: `Aged >${t.agingDays}d`, HV: 'High value' } as Record<string, string>)[f] || f;
 }
 export function flagClass(f: string): string { return ({ EXPD: 'bad', EXP: 'warn', BLK: 'bad', QH: 'warn', NM: 'bad', SLOW: 'warn', LL: 'warn', AGED: 'warn', HV: 'info' } as Record<string, string>)[f] || 'mat'; }

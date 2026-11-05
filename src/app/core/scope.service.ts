@@ -17,8 +17,21 @@ export class ScopeService {
       slowMovingDays: n('slowMovingDays', 90), consAgingDays: n('consAgingDays', 90), qualityHoldDays: n('qualityHoldDays', 30), highValue: n('highValue', 500000), fyStart: n('fyStart', 4) };
   });
   readonly level = computed(() => this.filter().plant !== 'All' ? 'unit' : this.filter().bu !== 'All' ? 'bu' : 'org');
-  readonly activePlants = computed(() => (this.masters()?.plants ?? []).filter(p => p.active));
-  readonly bus = computed(() => [...new Set(this.activePlants().map(p => p.buCode))]);
+  readonly activeBusinessUnits = computed(() =>
+    [...(this.masters()?.businessUnits ?? [])]
+      .filter(b => b.active !== false && Boolean(b.code))
+      .sort((a, b) => (a.sortOrder ?? 99) - (b.sortOrder ?? 99))
+  );
+  readonly activePlants = computed(() =>
+    [...(this.masters()?.plants ?? [])]
+      .filter(p => p.active !== false)
+      .sort((a, b) => (a.sortOrder ?? 99) - (b.sortOrder ?? 99))
+  );
+  readonly bus = computed(() => {
+    const fromMaster = this.activeBusinessUnits().map(b => b.code).filter(Boolean);
+    const fromPlants = this.activePlants().map(p => p.buCode).filter(Boolean);
+    return [...new Set([...fromMaster, ...fromPlants])];
+  });
 
   load() {
     this.api.masters().subscribe(m => this.masters.set(m));

@@ -32,7 +32,7 @@ export interface Action {
 export interface Thresholds { expiryDays: number; agingDays: number; longLyingDays: number; nonMovingDays: number; slowMovingDays: number; consAgingDays: number; qualityHoldDays: number; highValue: number; fyStart: number; }
 
 export interface Plant { id?: number; sapCode?: string | null; name: string; buCode: string; city?: string; active: boolean; sortOrder: number; }
-export interface BusinessUnit { code: string; name: string; alias?: string; }
+export interface BusinessUnit { code: string; name: string; alias?: string; active?: boolean; sortOrder?: number; }
 export interface StorageLocation { id?: number; plantName?: string | null; code: string; name: string; storageType: string; }
 export interface MaterialTypeMap { sapCode: string; description?: string; numberSeries?: string; category: string; department?: string | null; }
 export interface MaterialGroupMap { sapCode: string; description?: string; category?: string | null; department?: string | null; subCategory?: string; }

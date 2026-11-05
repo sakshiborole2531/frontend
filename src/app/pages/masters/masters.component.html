@@ -1,36 +1,466 @@
-<div class="pagehead"><div><div class="eb">Configuration</div><h2>Masters</h2><div class="q">Plants, storage locations, SAP mappings, owners and thresholds â€” each row is validated and saved to PostgreSQL</div></div></div>
-<div class="panel">
-<mat-tab-group animationDuration="0ms" [selectedIndex]="tab()" (selectedIndexChange)="onTab($event)">
-  @for (d of defs; track d.id) {
-  <mat-tab [label]="d.label + ' (' + (rows()[d.id]?.length ?? 0) + ')'">
-    <div style="padding-top:12px"><div class="desc">{{ d.desc }}</div>
-      <div class="toolbar"><button class="btn small" (click)="add(d)">ï¼‹ Add row</button>
-        <div class="fsel" style="height:32px;min-width:220px"><input type="text" placeholder="Search code or description" [ngModel]="q()[d.id] || ''" (ngModelChange)="setQ(d.id, $event)"></div>
-        <span class="hint">{{ filtered(d).length }} rows</span></div>
-      <div class="tablewrap"><table class="mtable"><thead><tr>@for (c of d.cols; track c.k) {<th>{{ c.l }}{{ c.req ? ' *' : '' }}</th>}<th></th></tr></thead><tbody>
-        @for (r of filtered(d); track r) {
-          <tr>@for (c of d.cols; track c.k) { <td>
-            @switch (c.type) {
-              @case ('select') { <select [(ngModel)]="r[c.k]" (ngModelChange)="touch(r)">@for (o of c.opts!(); track o) {<option [value]="o">{{ o === '' ? 'â€” none â€”' : o }}</option>}</select> }
-              @case ('check') { <label class="switch"><input type="checkbox" [(ngModel)]="r[c.k]" (ngModelChange)="touch(r)"><span class="tr"></span></label> }
-              @case ('number') { <input type="number" [(ngModel)]="r[c.k]" (ngModelChange)="touch(r)" style="width:80px"> }
-              @default { <input [type]="c.type === 'email' ? 'email' : 'text'" [(ngModel)]="r[c.k]" (ngModelChange)="touch(r)" [readonly]="c.key && !r._new" [placeholder]="c.req ? 'required' : ''"
-                [style.borderColor]="c.req && !r[c.k] && dirty.has(r) ? 'var(--red)' : ''"> }
-            }</td> }
-            <td style="white-space:nowrap">@if (dirty.has(r) || r._new) {<button class="btn small" (click)="save(d, r)">Save</button>} <button class="iconbtn" (click)="remove(d, r)" title="Delete row">âœ•</button></td></tr>
-        } @empty { <tr><td [attr.colspan]="d.cols.length + 1" class="empty">No rows</td></tr> }
-      </tbody></table></div></div>
-  </mat-tab> }
-  <mat-tab label="Functions & Action Types">
-    <div class="grid2" style="padding-top:12px">
-      <div><h3>Responsible functions</h3><div class="desc">One per line â€” functions that can own actions.</div><textarea rows="12" style="width:100%" [(ngModel)]="functionsText"></textarea><button class="btn small" (click)="saveList('functions')">Save functions</button></div>
-      <div><h3>Action types</h3><div class="desc">One per line â€” corrective action types offered when assigning an action.</div><textarea rows="12" style="width:100%" [(ngModel)]="actionTypesText"></textarea><button class="btn small" (click)="saveList('actionTypes')">Save action types</button></div>
+<div class="pagehead">
+  <button class="backbtn" (click)="goBack()" title="Back (Alt+←)">←</button>
+  <div>
+    <div class="eb">Configuration</div>
+    <h2>Masters</h2>
+    <div class="q">Plants, storage locations, mappings, owners and thresholds — edit, review, then Save to commit</div>
+  </div>
+</div>
+
+<div class="mlayout">
+  <!-- Left Column: Masters Navigation Panel -->
+  <div class="mnav">
+    @for (item of navItems; track item.id) {
+      <button
+        type="button"
+        [class.on]="sec() === item.id"
+        [class.msavenav]="item.id === 'save'"
+        [class.dirty]="item.id === 'save' && isDirty()"
+        (click)="selectSec(item.id)">
+        <span class="ic"><ic [n]="item.ic" [size]="16"/></span>
+        {{ item.id === 'save' ? (isDirty() ? 'Save changes' : 'Save') : item.label }}
+        <span class="cnt">{{ navCount(item.id) }}</span>
+      </button>
+    }
+    <div style="border-top:1px solid var(--border);margin:8px 4px 4px;padding-top:8px;display:flex;flex-direction:column;gap:6px">
+      <button type="button" class="btn secondary small" (click)="exportAllMasters()">
+        <ic n="download" [size]="15"/> Export all masters
+      </button>
+      <button type="button" class="btn secondary small" (click)="restoreInput.click()">
+        <ic n="upload" [size]="15"/> Import masters
+      </button>
+      <input #restoreInput type="file" accept=".json" style="display:none" (change)="importAllMasters(restoreInput)">
     </div>
-  </mat-tab>
-  <mat-tab label="Thresholds & Policy">
-    <div style="padding-top:12px"><div class="desc">Drive identification, prioritization, every KPI card and the security policy.</div>
-      <div class="formgrid">@for (t of thrKeys; track t[0]) {<div class="fgroup"><label>{{ t[1] }}</label><input [type]="t[0].startsWith('company') ? 'text' : 'number'" [(ngModel)]="thresholds[t[0]]" min="1"></div>}</div>
-      <div class="toolbar" style="margin-top:12px"><button class="btn" (click)="saveThresholds()">Save thresholds</button></div></div>
-  </mat-tab>
-</mat-tab-group>
+  </div>
+
+  <!-- Right Column: Dynamic Master Content -->
+  <div>
+    <!-- Status / Notification Bar -->
+    @if (isDirty()) {
+      <div class="msavebar dirty">
+        <span class="dot"></span>
+        <div>
+          <b>{{ changeLog().length }} unsaved change{{ changeLog().length === 1 ? '' : 's' }}</b>
+          <span>Edits are a draft — they are not applied to the dashboard until you save.</span>
+        </div>
+        <span class="spacer" style="flex:1"></span>
+        <button type="button" class="btn ghost small" (click)="selectSec('save')">Review</button>
+        <button type="button" class="btn secondary small" (click)="discardAll()">Discard</button>
+        <button type="button" class="btn small" (click)="saveAllMasters()">
+          <ic n="check" [size]="15"/> Save all masters
+        </button>
+      </div>
+    } @else {
+      <div class="msavebar">
+        <span class="dot ok"></span>
+        <div>
+          <b>All master configuration is saved</b>
+          <span>{{ lastSavedText() }}</span>
+        </div>
+      </div>
+    }
+
+    <!-- Main Configuration Card -->
+    <div class="panel" id="mBody">
+      @if (currentDef().table) {
+        @let def = currentDef();
+        @let allRows = rows()[def.id] || [];
+        @let shownRows = filteredRows(def.id);
+        <h2>{{ def.label }}</h2>
+        <div class="desc" [innerHTML]="def.desc || ''"></div>
+        <div class="toolbar">
+          <button type="button" class="btn small" (click)="addRow(def)">＋ Add row</button>
+          @if (allRows.length > 12 || q()[def.id]) {
+            <div class="fsel" style="height:32px;min-width:220px">
+              <span class="ic"><ic n="search" [size]="15"/></span>
+              <input type="text" placeholder="Search code or description" [ngModel]="q()[def.id] || ''" (ngModelChange)="setQ(def.id, $event)">
+            </div>
+          }
+          <span class="hint">{{ q()[def.id] ? (shownRows.length + ' of ' + allRows.length + ' rows') : (allRows.length + ' rows') }}</span>
+          <span class="spacer"></span>
+          @if (def.sapReset) {
+            <button type="button" class="btn secondary small" (click)="resetSapMaster(def)" title="Reload the SAP master list from SAP_Master; rows you added are kept">
+              <ic n="refresh" [size]="15"/> Reset to SAP master
+            </button>
+          }
+          <button type="button" class="btn secondary small" (click)="exportCsv(def)">
+            <ic n="download" [size]="15"/> Export CSV
+          </button>
+          <button type="button" class="btn secondary small" (click)="csvInput.click()">
+            <ic n="upload" [size]="15"/> Import CSV
+          </button>
+          <input #csvInput type="file" accept=".csv" style="display:none" (change)="importCsv(def, csvInput)">
+        </div>
+
+        <div class="tablewrap">
+          <table class="mtable">
+            <thead>
+              <tr>
+                <th>#</th>
+                @for (c of def.cols; track c.k) {
+                  <th>{{ c.l }}{{ c.req ? ' *' : '' }}</th>
+                }
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (r of shownRows; track r; let i = $index) {
+                <tr>
+                  <td class="hint">{{ i + 1 }}</td>
+                  @for (c of def.cols; track c.k) {
+                    <td>
+                      @switch (c.type) {
+                        @case ('select') {
+                          <select [(ngModel)]="r[c.k]" (ngModelChange)="onCellChange(def, r, i, c, $event)">
+                            @for (o of c.opts!(); track o) {
+                              <option [value]="o">{{ o === '' ? '— all —' : o }}</option>
+                            }
+                            @if (r[c.k] && !c.opts!().includes(r[c.k])) {
+                              <option [value]="r[c.k]">{{ r[c.k] }}</option>
+                            }
+                          </select>
+                        }
+                        @case ('check') {
+                          <label class="switch">
+                            <input type="checkbox" [(ngModel)]="r[c.k]" (ngModelChange)="onCellChange(def, r, i, c, $event)">
+                            <span class="tr"></span>
+                          </label>
+                        }
+                        @case ('number') {
+                          <input type="number" [(ngModel)]="r[c.k]" (ngModelChange)="onCellChange(def, r, i, c, $event)" style="width:80px">
+                        }
+                        @default {
+                          <input
+                            [type]="c.type === 'email' ? 'email' : 'text'"
+                            [(ngModel)]="r[c.k]"
+                            (ngModelChange)="onCellChange(def, r, i, c, $event)"
+                            [placeholder]="c.req ? 'required' : ''">
+                        }
+                      }
+                    </td>
+                  }
+                  <td style="white-space:nowrap">
+                    @if (def.url && !def.list && isRowDirty(r)) {
+                      <button type="button" class="btn small" style="padding:3px 8px;margin-right:4px" (click)="saveRow(def, r, i)" title="Save this row">Save</button>
+                    }
+                    <button type="button" class="iconbtn" (click)="removeRow(def, r, i)" title="Delete row">✕</button>
+                  </td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td [attr.colspan]="(def.cols?.length || 1) + 2" class="empty">No rows — click “Add row”</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        <div class="hint" style="margin-top:8px">Edits are kept as a draft — click <b>Save all masters</b> to commit.</div>
+      } @else {
+        @switch (sec()) {
+          @case ('company') {
+            <h2>Company</h2>
+            <div class="desc">Shown in the header. Upload your official logo (PNG/JPG/SVG, under 300 KB).</div>
+            <div class="formgrid">
+              <div class="fgroup">
+                <label>Company name</label>
+                <input type="text" [ngModel]="company.name" (ngModelChange)="onCompanyChange('name', 'Company name', $event)">
+              </div>
+              <div class="fgroup">
+                <label>Short name (wordmark)</label>
+                <input type="text" [ngModel]="company.short" (ngModelChange)="onCompanyChange('short', 'Short name (wordmark)', $event)">
+              </div>
+              <div class="fgroup">
+                <label>Logo</label>
+                <div style="display:flex;gap:8px;align-items:center">
+                  @if (company.logo) {
+                    <img [src]="company.logo" alt="Company logo" style="height:34px;max-width:120px;object-fit:contain;background:#fff;border-radius:6px;padding:2px">
+                  }
+                  <button type="button" class="btn secondary small" (click)="logoInput.click()">
+                    <ic n="upload" [size]="15"/> {{ company.logo ? 'Change' : 'Upload' }}
+                  </button>
+                  @if (company.logo) {
+                    <button type="button" class="btn ghost small" (click)="removeLogo()">Remove</button>
+                  }
+                  <input #logoInput type="file" accept="image/png,image/jpeg,image/svg+xml" style="display:none" (change)="onLogoPick($event)">
+                </div>
+              </div>
+            </div>
+            <div class="note" style="margin-top:14px">
+              Users, roles and data access are managed under <a routerLink="/users"><b>Configuration → Users &amp; Access</b></a>. Each person edits their own details under <b>My Profile</b> (click the name at top right).
+            </div>
+          }
+
+          @case ('thresholds') {
+            <h2>Exception Thresholds</h2>
+            <div class="desc">Drive identification, prioritization and all KPI cards. Defaults follow the operating philosophy (≤180 days expiry, &gt;180 days aging).</div>
+            <div class="formgrid">
+              @for (t of thrSelects; track t.k) {
+                <div class="fgroup">
+                  <label>{{ t.l }}</label>
+                  <select [ngModel]="thresholds[t.k]" (ngModelChange)="onThresholdChange(t.k, t.l, $event)">
+                    @for (v of t.opts; track v) {
+                      <option [ngValue]="v">{{ v }}</option>
+                    }
+                    @if (!t.opts.includes(thresholds[t.k])) {
+                      <option [ngValue]="thresholds[t.k]">{{ thresholds[t.k] }}</option>
+                    }
+                  </select>
+                </div>
+              }
+              <div class="fgroup">
+                <label>High-value threshold (₹ Lakh)</label>
+                <input type="number" min="0.1" step="0.1" [ngModel]="thresholds['highValueLakh']" (ngModelChange)="onThresholdChange('highValueLakh', 'High-value threshold (₹ Lakh)', $event)">
+              </div>
+              <div class="fgroup">
+                <label>Financial year starts in</label>
+                <select [ngModel]="thresholds['fyStart']" (ngModelChange)="onThresholdChange('fyStart', 'Financial year starts in', $event)">
+                  <option [ngValue]="4">April (Apr–Mar, Indian FY)</option>
+                  <option [ngValue]="1">January (calendar year)</option>
+                </select>
+              </div>
+            </div>
+            <div class="hint" style="margin-top:10px">Edits are kept as a draft — click <b>Save all masters</b> to apply them to every page.</div>
+          }
+
+          @case ('matrix') {
+            @let cfg = mx();
+            @let allRows = mxAllRows();
+            @let allCols = mxAllCols();
+            <h2>Matrix View</h2>
+            <div class="desc">Configure the Plant × Category matrix opened from the <b>Matrix view</b> button in the header: which plants (rows) and categories (columns) appear, their order and header labels, the default measure and the Green / Yellow / Red / Dark-red health thresholds. The preview below updates as you edit; changes are committed with <b>Save all masters</b>.</div>
+            <div class="formgrid" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr))">
+              <div class="fgroup">
+                <label>Default measure</label>
+                <select [ngModel]="cfg.measure" (ngModelChange)="updateMx('measure', 'Default measure', $event)">
+                  @for (m of mxMeasures; track m[0]) {
+                    <option [value]="m[0]">{{ m[1] }}</option>
+                  }
+                </select>
+              </div>
+              <div class="fgroup">
+                <label>Default percent</label>
+                <select [ngModel]="cfg.pct" (ngModelChange)="updateMx('pct', 'Default percent', $event)">
+                  <option value="none">Values only</option>
+                  <option value="grand">% of grand total</option>
+                  <option value="row">% of plant (row)</option>
+                  <option value="col">% of category (column)</option>
+                </select>
+              </div>
+              <div class="fgroup">
+                <label>Colour cells by</label>
+                <select [ngModel]="cfg.colorBy" (ngModelChange)="updateMx('colorBy', 'Colour cells by', $event)">
+                  <option value="rag">Health status (RAG)</option>
+                  <option value="heat">Value intensity</option>
+                  <option value="none">No colour</option>
+                </select>
+              </div>
+              <div class="fgroup" style="grid-column:span 2">
+                <label>RAG thresholds — % of value / batches at risk</label>
+                <div class="ragset">
+                  <span class="rag-g">Green &lt;</span>
+                  <input type="number" min="1" max="99" [ngModel]="cfg.rag.g" (change)="updateMxRag('g', 'Green', $any($event.target).value)">
+                  <span class="rag-y">Yellow &lt;</span>
+                  <input type="number" min="1" max="99" [ngModel]="cfg.rag.y" (change)="updateMxRag('y', 'Yellow', $any($event.target).value)">
+                  <span class="rag-r">Red &lt;</span>
+                  <input type="number" min="1" max="100" [ngModel]="cfg.rag.r" (change)="updateMxRag('r', 'Red', $any($event.target).value)">
+                  <span class="rag-dr">Dark red ≥ {{ cfg.rag.r }}</span>
+                </div>
+              </div>
+              <div class="fgroup">
+                <label>Options</label>
+                <div style="display:flex;flex-direction:column;gap:4px;padding-top:4px">
+                  <label class="chk">
+                    <input type="checkbox" [ngModel]="cfg.subtotals" (ngModelChange)="updateMx('subtotals', 'BU subtotals', $event)"> Business-unit subtotal rows
+                  </label>
+                  <label class="chk">
+                    <input type="checkbox" [ngModel]="cfg.hideEmpty" (ngModelChange)="updateMx('hideEmpty', 'Hide empty plants', $event)"> Hide plants without stock
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <div class="grid2" style="margin-top:12px;align-items:start">
+              <div>
+                <h3>Rows — plants <span class="hint">({{ mxShownRowsCount() }} shown)</span></h3>
+                <div class="mxlist">
+                  @for (p of allRows; track p; let i = $index) {
+                    @let hidden = cfg.hideRows.includes(p);
+                    <div class="mxitem" [class.off]="hidden">
+                      <label class="chk">
+                        <input type="checkbox" [checked]="!hidden" (change)="toggleMxItem('row', p, $any($event.target).checked)">
+                        <b>{{ p }}</b> <span class="hint">{{ plantBu(p) }}</span>
+                      </label>
+                      <span class="mxmv">
+                        <button type="button" class="iconbtn" [disabled]="i === 0" (click)="moveMxItem('row', i, -1)" title="Move up">▲</button>
+                        <button type="button" class="iconbtn" [disabled]="i === allRows.length - 1" (click)="moveMxItem('row', i, 1)" title="Move down">▼</button>
+                      </span>
+                    </div>
+                  }
+                </div>
+                <div class="hint" style="margin-top:6px">Plants switched off in Masters → Plants never appear.</div>
+              </div>
+
+              <div>
+                <h3>Columns — categories <span class="hint">({{ mxShownColsCount() }} shown)</span></h3>
+                <div class="mxlist">
+                  @for (c of allCols; track c; let i = $index) {
+                    @let hidden = cfg.hideCols.includes(c);
+                    <div class="mxitem" [class.off]="hidden">
+                      <label class="chk">
+                        <input type="checkbox" [checked]="!hidden" (change)="toggleMxItem('col', c, $any($event.target).checked)">
+                        <b>{{ c }}</b>
+                      </label>
+                      <input type="text" class="mxlbl" [value]="cfg.colLabels[c] || ''" placeholder="Header label" (change)="setMxColLabel(c, $any($event.target).value)">
+                      <span class="mxmv">
+                        <button type="button" class="iconbtn" [disabled]="i === 0" (click)="moveMxItem('col', i, -1)" title="Move up">▲</button>
+                        <button type="button" class="iconbtn" [disabled]="i === allCols.length - 1" (click)="moveMxItem('col', i, 1)" title="Move down">▼</button>
+                      </span>
+                    </div>
+                  }
+                </div>
+                <div class="toolbar" style="margin-top:8px">
+                  <button type="button" class="btn ghost small" (click)="resetMxOrderAndLabels()">Reset order &amp; labels</button>
+                </div>
+              </div>
+            </div>
+
+            @if (mxPreview(); as mp) {
+              <h3 style="margin-top:16px">Preview</h3>
+              <div class="mxwrap">
+                <table class="mxtbl preview">
+                  <thead>
+                    <tr>
+                      <th class="mxr corner">Plant <span>↓</span>&nbsp; Category <span>→</span></th>
+                      @for (c of mp.columns; track c) {
+                        @if (!cfg.hideCols.includes(c)) {
+                          <th class="mxh">{{ cfg.colLabels[c] || c }}</th>
+                        }
+                      }
+                      <th class="mxh mxt">Total</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (r of mp.rows; track r.plant; let i = $index) {
+                      @if (!cfg.hideRows.includes(r.plant) && (!cfg.hideEmpty || r.total.v)) {
+                        <tr [class.odd]="i % 2">
+                          <th class="mxr">{{ r.plant }}<span>{{ r.bu }}</span></th>
+                          @for (c of mp.columns; track c) {
+                            @if (!cfg.hideCols.includes(c)) {
+                              <td class="mxc {{ cfg.colorBy === 'rag' && r.cells[c]?.v ? 'rag-' + mxRagOf(r.cells[c].share) : '' }}">
+                                {{ mxFmt(r.cells[c]?.v) }}
+                              </td>
+                            }
+                          }
+                          <td class="mxt">{{ mxFmt(r.total.v) }}</td>
+                        </tr>
+                      }
+                    }
+                  </tbody>
+                </table>
+              </div>
+            }
+          }
+
+          @case ('kpi') {
+            <h2>Store Performance KPI Targets</h2>
+            <div class="desc">Enter current values monthly (baseline in Weeks 1–2). "Aged / non-moving stock" is calculated automatically.</div>
+            <div class="tablewrap">
+              <table class="mtable">
+                <thead>
+                  <tr>
+                    <th>KPI</th>
+                    <th>Unit</th>
+                    <th>Current</th>
+                    <th>Rule</th>
+                    <th>Target</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (k of kpis(); track k.id; let i = $index) {
+                    <tr>
+                      <td><input type="text" [ngModel]="k.name" (ngModelChange)="onKpiChange(i, 'name', $event)"></td>
+                      <td><input type="text" [ngModel]="k.unit" (ngModelChange)="onKpiChange(i, 'unit', $event)" style="min-width:60px"></td>
+                      <td>
+                        @if (k.auto) {
+                          <span class="hint">auto</span>
+                        } @else {
+                          <input type="number" step="any" [ngModel]="k.current" (ngModelChange)="onKpiChange(i, 'current', $event)" style="width:100px">
+                        }
+                      </td>
+                      <td>
+                        <select [ngModel]="k.dir" (ngModelChange)="onKpiChange(i, 'dir', $event)">
+                          <option value=">=">≥ (higher is better)</option>
+                          <option value="<=">≤ (lower is better)</option>
+                        </select>
+                      </td>
+                      <td><input type="number" step="any" [ngModel]="k.target" (ngModelChange)="onKpiChange(i, 'target', $event)" style="width:100px"></td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+            <div class="hint" style="margin-top:8px">Edits are kept as a draft — click <b>Save all masters</b> to commit.</div>
+          }
+
+          @case ('save') {
+            <h2><ic n="check" [size]="18"/> Save master configuration</h2>
+            <div class="desc">Review every change made in Masters since the last save, then commit them together. Saving applies them to all pages, imports and reports, and records them in the audit log.</div>
+            @if (isDirty()) {
+              <h3 style="margin:14px 0 6px">What will change</h3>
+              <div class="tablewrap" style="max-height:none">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Master</th>
+                      <th>Change</th>
+                      <th>Rows</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (d of diffSummary(); track d.lbl) {
+                      <tr>
+                        <td><b>{{ d.lbl }}</b></td>
+                        <td class="wrap">{{ d.text }}</td>
+                        <td class="hint">{{ d.rows }}</td>
+                      </tr>
+                    } @empty {
+                      <tr>
+                        <td colspan="3" class="empty">Pending draft changes ready to commit</td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+
+              <h3 style="margin:16px 0 6px">Change log ({{ changeLog().length }})</h3>
+              <div class="mlog">
+                @for (l of changeLog(); track l.at + l.what) {
+                  <div>
+                    <span class="tag mat">{{ l.sec }}</span> {{ l.what }}
+                    <span class="hint">{{ formatTime(l.at) }}</span>
+                  </div>
+                }
+              </div>
+
+              <div class="actions" style="margin-top:16px;display:flex;gap:10px">
+                <button type="button" class="btn" (click)="saveAllMasters()">
+                  <ic n="check" [size]="16"/> Save all masters
+                </button>
+                <button type="button" class="btn secondary" (click)="discardAll()">
+                  Discard all changes
+                </button>
+              </div>
+            } @else {
+              <div class="cinfo ok" style="margin-top:12px">
+                <ic n="check" [size]="18"/>
+                <div>
+                  <b>Nothing to save.</b> {{ lastSavedText() }}. Edit any master on the left — changes collect here until you save.
+                </div>
+              </div>
+            }
+          }
+        }
+      }
+    </div>
+  </div>
 </div>

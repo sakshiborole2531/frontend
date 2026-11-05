@@ -15,17 +15,3 @@ app-root { display: block; }
 .err { color: var(--red); font-size: 11.5px; font-weight: 600; margin-top: 2px; }
 input.ng-invalid.ng-touched, select.ng-invalid.ng-touched, textarea.ng-invalid.ng-touched { border-color: var(--red) !important; }
 .loading { padding: 40px; text-align: center; color: var(--mute); }
-
-/* Sidebar · database-driven Masters groups (same look as the existing sitem / ssub entries) */
-.sitem.mgrp .mcnt { margin-left: auto; font-size: 10.5px; font-weight: 700; border-radius: 10px; padding: 1px 7px; background: var(--surface2); color: var(--mute); }
-.sitem.mgrp .mcnt + .chev { margin-left: 6px; }
-.sitem.mgrp .chev { padding: 2px 4px; border-radius: 5px; }
-.sitem.mgrp .chev:hover { background: var(--surface2); }
-.sitem.mgrp.grpon { background: var(--orange-bg); }
-.ssub.mlist { max-height: 280px; overflow-y: auto; overscroll-behavior: contain; }
-.ssub.mlist button .mlbl { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.ssub.mlist button .cnt { max-width: 90px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: none; }
-.ssub.mlist .mempty { font-size: 12px; color: var(--mute); font-style: italic; padding: 6px 10px; }
-.sidesec .mretry { float: right; border: none; background: none; color: var(--orange); font-size: 10px; font-weight: 700; letter-spacing: .04em; text-transform: none; cursor: pointer; padding: 0; }
-body.sidemini .sitem.mgrp .mcnt { display: none; }
-@media (max-width: 980px) { body.sidemini .sitem.mgrp .mcnt { display: inline; } }
