@@ -54,3 +54,49 @@ export interface SidebarMasterData {
   plants: PlantSidebarItem[]; businessUnits: BusinessUnitSidebarItem[]; storageLocations: StorageLocationSidebarItem[]; materialTypes: MaterialTypeSidebarItem[];
   counts: SidebarMasterCounts;
 }
+
+/** Automatic Daily SAP Inventory Import models. */
+export type AutomaticImportStatusCode =
+  | 'Not Configured'
+  | 'Disabled'
+  | 'Waiting for Next Import'
+  | 'Import Running'
+  | 'Import Successful'
+  | 'Import Failed';
+
+export interface AutomaticImportConfig {
+  folderPath: string;
+  fileName: string;
+  fileFormat: 'AUTO' | 'SAPSTOCK' | 'APP';
+  fileLastModified?: string | null;
+  fileSize?: number | null;
+  frequencyHours: number;
+  enabled: boolean;
+  importMode: 'replace' | 'upsert' | 'add';
+  startTime: string;
+}
+
+export interface AutomaticImportStatus {
+  status: AutomaticImportStatusCode;
+  enabled: boolean;
+  configured: boolean;
+  lastSuccessfulImport?: string | null;
+  lastAttemptAt?: string | null;
+  nextScheduledImport?: string | null;
+  frequencyLabel: string;
+  lastError?: string | null;
+}
+
+export interface AutomaticImportHistoryEntry {
+  id: number | string;
+  importedAt: string;
+  fileName: string;
+  importType: string;
+  totalRecords: number;
+  addedRecords: number;
+  updatedRecords: number;
+  failedRecords: number;
+  status: 'Import Successful' | 'Import Failed' | 'Import Running' | 'OK' | 'Failed';
+  errorDetails?: string | null;
+  source?: string;
+}

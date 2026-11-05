@@ -1,21 +1,50 @@
 <div class="pagehead"><div><div class="eb">Configuration</div><h2>Import / Export</h2><div class="q">Download the template, upload inventory from Excel / SAP extracts, export reports</div></div></div>
 <div class="steps"><span class="done"><i>1</i>Download template</span><span [class.done]="res()" [class.on]="!res()"><i>2</i>Upload file</span><span [class.on]="res()"><i>3</i>Preview &amp; validate</span><span><i>4</i>Confirm import</span></div>
 <div class="grid2">
-  <div class="panel"><h2>Import templates</h2><div class="desc">The SAP stock template has the 22 columns of the Unichem SAP stock layout â€” a SAP export can be uploaded as-is. Date of Manufacture = manufacturing, SLED/BBD = expiry, GR Posting Date = in stock since (age), Last Posting Date = last consumption.</div>
-    <div class="xcard" style="margin-bottom:10px"><h3>SAP stock report â€” Unichem layout (22 columns) <span class="tag ok">recommended</span></h3>
+  <div class="panel"><h2>Import templates</h2><div class="desc">The SAP stock template has the 22 columns of the Unichem SAP stock layout — a SAP export can be uploaded as-is. Date of Manufacture = manufacturing, SLED/BBD = expiry, GR Posting Date = in stock since (age), Last Posting Date = last consumption.</div>
+    <div class="xcard" style="margin-bottom:10px"><h3>SAP stock report — Unichem layout (22 columns) <span class="tag ok">recommended</span></h3>
       <div class="row"><button class="btn" (click)="dl('/inventory/template/sap', 'Unichem_SAP_Stock_Template.xlsx')">Download SAP stock template</button></div></div>
     <div class="xcard"><h3>Inventory template (manual / non-SAP data)</h3><p>Simplified template with lying-since and last-issue dates for consumables.</p>
       <div class="row"><button class="btn secondary" (click)="dl('/inventory/template/app', 'Unichem_Inventory_Template.xlsx')">Download inventory template</button></div></div></div>
   @if (auth.can('import.data')) {
   <div class="panel"><h2>Import inventory</h2><div class="desc">Excel (.xlsx) or CSV. Nothing is saved until you confirm the preview.</div>
     <div class="formgrid" style="grid-template-columns:1fr">
-      <div class="fgroup"><label>File format</label><select [(ngModel)]="format"><option value="AUTO">Detect automatically</option><option value="SAPSTOCK">SAP stock report â€” Unichem layout</option><option value="APP">Inventory template (this app)</option></select></div>
+      <div class="fgroup"><label>File format</label><select [(ngModel)]="format"><option value="AUTO">Detect automatically</option><option value="SAPSTOCK">SAP stock report — Unichem layout</option><option value="APP">Inventory template (this app)</option></select></div>
       <div class="radios">
         <label><input type="radio" name="m" value="upsert" [(ngModel)]="mode"><div><b>Update existing &amp; add new</b><span>Matches on plant + material code + batch. Recommended for refreshes.</span></div></label>
         <label><input type="radio" name="m" value="add" [(ngModel)]="mode"><div><b>Add only</b><span>Adds rows whose plant + code + batch does not exist yet.</span></div></label>
         <label><input type="radio" name="m" value="history" [(ngModel)]="mode"><div><b>Historical snapshot (year-wise)</b><span>Use a past SAP extract to build that month's history. Current inventory is not changed. As of: <input type="date" [(ngModel)]="asOf" style="padding:3px 6px"></span></div></label>
         <label><input type="radio" name="m" value="replace" [(ngModel)]="mode"><div><b>Replace all inventory (in your scope)</b><span>Clears current records first; actions re-link by plant + code + batch.</span></div></label>
       </div>
+
+      <!-- Automatic Daily Import section immediately below "Replace all inventory (in your scope)" -->
+      <div>
+        <div style="margin-top:4px;margin-bottom:2px">
+          <div style="font-size:13px;font-weight:800;color:var(--navy)">Automatic Daily Import</div>
+          <div class="hint">Automatically import the latest SAP inventory Excel file from the configured Windows folder every 24 hours.</div>
+        </div>
+        <input #autoFi type="file" accept=".xlsx,.xls" hidden (change)="onAutoFileSelected($event)">
+        <app-automatic-import-card
+          [config]="autoConfig()"
+          [status]="autoStatus()"
+          [draft]="autoDraft()"
+          [configOpen]="autoConfigOpen()"
+          [loading]="autoLoading()"
+          [saving]="autoSaving()"
+          [running]="autoRunning()"
+          [selectedFileName]="autoSelectedFile()?.name || ''"
+          [validationError]="autoValidationError()"
+          [errorMessage]="autoErrorMessage()"
+          (configureClick)="openAutoConfig(autoFi)"
+          (enableClick)="enableAutoImport()"
+          (disableClick)="disableAutoImport()"
+          (runNowClick)="runAutoImportNow(autoFi)"
+          (browseFile)="triggerAutoFileBrowse(autoFi)"
+          (saveConfig)="saveAutoConfig()"
+          (cancelConfig)="cancelAutoConfig()"
+          (clearError)="autoErrorMessage.set('')"/>
+      </div>
+
       <div class="drop" [class.over]="over()" (click)="fi.click()" (dragover)="$event.preventDefault(); over.set(true)" (dragleave)="over.set(false)" (drop)="drop($event)">
         <b>Click to choose a file, or drop it here</b>.xlsx, .xls or .csv (SAP export or template)</div>
       <input #fi type="file" accept=".xlsx,.xls,.xlsm,.csv,.txt" hidden (change)="pick($event)">
@@ -25,11 +54,11 @@
 </div>
 @if (res(); as r) {
 <div class="gap"></div>
-<div class="panel"><h2>Preview â€” {{ r.file }}</h2><div class="desc">{{ r.rowsRead }} rows read Â· format {{ r.format }} Â· mode <b>{{ r.mode }}</b></div>
+<div class="panel"><h2>Preview — {{ r.file }}</h2><div class="desc">{{ r.rowsRead }} rows read · format {{ r.format }} · mode <b>{{ r.mode }}</b></div>
   @if (r.missingColumns.includes('code') || r.missingColumns.includes('plant')) { <div class="note" style="border-color:var(--red);margin-bottom:12px"><b style="color:var(--red)">Key columns not found.</b> Choose the correct file format or use the template headers.</div> }
   <div class="cards">
-    <div class="card t-green"><div class="label">Ready to import</div><div class="value green">{{ r.ready }}</div><div class="sub">{{ r.mode === 'upsert' ? r.added + ' new Â· ' + r.updated + ' updates' : '' }}</div></div>
-    <div class="card t-amber"><div class="label">With warnings</div><div class="value amber">{{ r.warnings }}</div><div class="sub">imported â€” review in Data Quality</div></div>
+    <div class="card t-green"><div class="label">Ready to import</div><div class="value green">{{ r.ready }}</div><div class="sub">{{ r.mode === 'upsert' ? r.added + ' new · ' + r.updated + ' updates' : '' }}</div></div>
+    <div class="card t-amber"><div class="label">With warnings</div><div class="value amber">{{ r.warnings }}</div><div class="sub">imported — review in Data Quality</div></div>
     <div class="card t-red"><div class="label">Skipped</div><div class="value red">{{ r.skipped }}</div><div class="sub">excluded SAP types or errors</div></div>
     <div class="card"><div class="label">Value to import</div><div class="value">{{ r.value | inr }}</div></div>
   </div>
@@ -37,7 +66,7 @@
     <span class="spacer"></span><div class="seg-tabs"><button [class.on]="rowFilter() === 'all'" (click)="rowFilter.set('all')">All</button><button [class.on]="rowFilter() === 'Warning'" (click)="rowFilter.set('Warning')">Warnings</button><button [class.on]="rowFilter() === 'Error'" (click)="rowFilter.set('Error')">Errors</button></div></div>
   <div class="tablewrap"><table><thead><tr><th>Row</th><th>Status</th><th>Plant</th><th>Category</th><th>Code</th><th>Description</th><th>Batch</th><th class="num">U / Q / B</th><th class="num">Unit cost</th><th>GR date</th><th>SLED/BBD</th><th>Issues</th></tr></thead><tbody>
     @for (x of rows(); track x.row) { <tr><td>{{ x.row }}</td><td><span class="tag {{ x.status === 'OK' ? 'ok' : x.status === 'Warning' ? 'warn' : x.status === 'Excluded' ? 'mat' : 'bad' }}">{{ x.status }}</span></td>
-      <td>{{ x.record.plant }}</td><td>{{ short[x.record.matType] }}{{ x.record.dept ? ' Â· ' + x.record.dept : '' }}</td><td>{{ x.record.code }}</td><td>{{ x.record.name }}</td><td>{{ x.record.batch || 'â€“' }}</td>
+      <td>{{ x.record.plant }}</td><td>{{ short[x.record.matType] }}{{ x.record.dept ? ' · ' + x.record.dept : '' }}</td><td>{{ x.record.code }}</td><td>{{ x.record.name }}</td><td>{{ x.record.batch || '–' }}</td>
       <td class="num">{{ x.record.u | qty }} / {{ x.record.q | qty }} / {{ x.record.b | qty }}</td><td class="num">{{ x.record.unitCost | qty }}</td><td>{{ x.record.receiptDate | dt }}</td><td>{{ x.record.expiryDate | dt }}</td>
       <td class="wrap">@for (e of x.errors; track e) {<span class="tag bad">{{ e }}</span>}@for (w of x.warnings; track w) {<span class="tag warn">{{ w }}</span>}</td></tr> }
   </tbody></table></div></div>
@@ -51,9 +80,19 @@
       <div class="xcard"><h3>Action register</h3><p>All actions with owner, target date, escalation and closure details.</p><div class="row"><button class="btn small" (click)="dl('/actions/export', 'actions.xlsx')">Excel</button></div></div>
     }
     @if (auth.can('data.clear')) {
-      <div class="xcard"><h3>Sample data</h3><p>Illustrative inventory, actions and 3 years of history â€” for demos and UAT. Replaces current data.</p><div class="row"><button class="btn danger small" (click)="sample()">Load sample dataâ€¦</button></div></div>
+      <div class="xcard"><h3>Sample data</h3><p>Illustrative inventory, actions and 3 years of history — for demos and UAT. Replaces current data.</p><div class="row"><button class="btn danger small" (click)="sample()">Load sample data…</button></div></div>
     }
   </div></div>
+
+<div class="gap"></div>
+<app-automatic-import-history
+  [entries]="autoHistory()"
+  [loading]="autoHistoryLoading()"
+  [selectedDetail]="autoSelectedDetail()"
+  (refreshHistory)="loadAutomaticImportHistory()"
+  (inspectRow)="inspectAutoHistory($event)"
+  (closeDetail)="autoSelectedDetail.set(null)"/>
+
 <div class="panel"><h2>Sync / import log</h2>
   <div class="tablewrap short"><table><thead><tr><th>When</th><th>Source</th><th class="num">Records</th><th>Status</th><th>Message</th></tr></thead><tbody>
     @for (l of sync(); track l.id) {<tr><td>{{ fmtDT(l.at) }}</td><td>{{ l.source }}</td><td class="num">{{ l.records }}</td><td><span class="tag ok">{{ l.status }}</span></td><td class="wrap">{{ l.message }}</td></tr>}
