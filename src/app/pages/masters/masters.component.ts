@@ -222,12 +222,13 @@ export class MastersComponent {
     {
       id: 'mtypes', label: 'Material Types (SAP)', ic: 'box', table: true, sapReset: true, url: '/masters/material-types', idOf: r => r.sapCode,
       desc: 'SAP material types (MTART) with Unichem number series, mapped to the six dashboard categories. “Exclude” keeps non-inventory types (capital goods, services, scrap, non-valuated) out of the dashboard. Default department applies to consumables when the material group does not decide it.',
-      blank: () => ({ sapCode: '', description: '', numberSeries: '', category: 'Raw Material', department: '', _new: true }),
+      blank: () => ({ sapCode: '', description: '', numberSeries: '', category: 'Raw Material', businessUnit: '', department: '', _new: true }),
       cols: [
         { k: 'sapCode', l: 'Material type', req: true, key: true },
         { k: 'description', l: 'Description' },
         { k: 'numberSeries', l: 'Number series' },
         { k: 'category', l: 'Dashboard category', type: 'select', opts: () => this.catOpts },
+        { k: 'businessUnit', l: 'Business Unit', type: 'select', opts: () => ['', ...this.buCodes()] },
         { k: 'department', l: 'Default department', type: 'select', opts: () => this.deptOpts }
       ]
     },
@@ -741,6 +742,25 @@ export class MastersComponent {
     });
   }
 
+  downloadSample(def: MasterDef) {
+    const cols = def.cols ?? [];
+    const header = cols.map(c => c.l);
+    let sampleRows: string[][] = [];
+    if (def.id === 'mtypes') {
+      const bu = this.buCodes()[0] || 'API';
+      sampleRows = [
+        ['ERSA', 'Spare Parts', '', 'Consumable', bu, 'Engineering'],
+        ['ROH', 'Raw Material', '10000000', 'Raw Material', bu, 'Production'],
+        ['VERP', 'Packaging', '50000000', 'Packing Material', bu, 'Production']
+      ];
+    } else {
+      sampleRows = [
+        cols.map(c => (c.type === 'check' ? 'Yes' : (c.req ? 'Sample' : '')))
+      ];
+    }
+    this.downloadCsv(`sample_${def.id}.csv`, header, sampleRows);
+  }
+
   exportCsv(def: MasterDef) {
     const cols = def.cols ?? [];
     const header = cols.map(c => c.l);
@@ -779,7 +799,10 @@ export class MastersComponent {
         const headers = parseLine(lines[0]);
         const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
         const cols = def.cols ?? [];
-        const imported = lines.slice(1).map(line => {
+        const validBus = new Set(this.buCodes().map(b => b.toLowerCase()));
+        const invalidBuRows: number[] = [];
+
+        const imported = lines.slice(1).map((line, rIdx) => {
           const vals = parseLine(line);
           const obj: any = { _new: true };
           cols.forEach((c, idx) => {
@@ -787,10 +810,25 @@ export class MastersComponent {
             const raw = hIdx >= 0 ? vals[hIdx] : (vals[idx] ?? '');
             obj[c.k] = c.type === 'check' ? !/^(no|false|0|n)$/i.test(raw) : raw;
           });
+
+          if (def.id === 'mtypes' && obj.businessUnit) {
+            const buVal = String(obj.businessUnit).trim();
+            if (buVal && !validBus.has(buVal.toLowerCase())) {
+              invalidBuRows.push(rIdx + 2);
+            }
+          }
+
           return obj;
         }).filter(o => cols.filter(c => c.req).every(c => String(o[c.k] ?? '').trim() !== ''));
 
-        if (!imported.length) throw new Error('No valid rows found. Use the column headers from Export CSV.');
+        if (invalidBuRows.length > 0) {
+          const msg = `Unknown Business Unit found on row(s): ${invalidBuRows.slice(0, 5).join(', ')}${invalidBuRows.length > 5 ? '...' : ''}. Valid Business Units are: ${this.buCodes().join(', ')}`;
+          if (!confirm(`${msg}\n\nDo you want to continue importing anyway?`)) {
+            return;
+          }
+        }
+
+        if (!imported.length) throw new Error('No valid rows found. Use the column headers from Export CSV or Download Sample.');
         const mode = confirm(`${imported.length} rows found.\n\nOK = replace this master\nCancel = add to existing rows`) ? 'replace' : 'add';
         const cur = this.rows()[def.id] ?? [];
         const next = mode === 'replace' ? imported : [...cur, ...imported];

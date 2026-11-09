@@ -34,7 +34,7 @@ export interface Thresholds { expiryDays: number; agingDays: number; longLyingDa
 export interface Plant { id?: number; sapCode?: string | null; name: string; buCode: string; city?: string; active: boolean; sortOrder: number; }
 export interface BusinessUnit { code: string; name: string; alias?: string; active?: boolean; sortOrder?: number; }
 export interface StorageLocation { id?: number; plantName?: string | null; code: string; name: string; storageType: string; }
-export interface MaterialTypeMap { sapCode: string; description?: string; numberSeries?: string; category: string; department?: string | null; }
+export interface MaterialTypeMap { sapCode: string; description?: string; numberSeries?: string; category: string; businessUnit?: string | null; department?: string | null; }
 export interface MaterialGroupMap { sapCode: string; description?: string; category?: string | null; department?: string | null; subCategory?: string; }
 export interface Person { id?: number; name: string; functionName?: string; email?: string; }
 export interface Masters {
