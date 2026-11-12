@@ -28,12 +28,12 @@
       }
       <div class="tree">
         @for (b of scope.bus(); track b; let i = $index) {
-          <button class="tnode bu" [class.on]="scope.filter().bu === b && scope.filter().plant === 'All' && onDash()" [class.inpath]="scope.filter().bu === b" (click)="goScope(b)">
+          <button class="tnode bu" [class.on]="scope.filter().bu === b && scope.filter().plant === 'All' && onDash()" [class.inpath]="scope.filter().bu === b" (click)="goScope(b)" [title]="b">
             <span class="tic"><ic [n]="i === 0 ? 'factory' : 'layers'" [size]="15"/></span>{{ b }}<span class="lvl">BU</span><span class="chev" style="margin-left:4px;font-size:10px;opacity:.75;display:inline-block;transition:transform .15s" [style.transform]="isBuOpen(b) ? 'rotate(0deg)' : 'rotate(-90deg)'" (click)="toggleBu(b, $event)" title="Expand / collapse">▾</span></button>
           @if (isBuOpen(b)) {
             <div class="tunits">
               @for (u of scope.unitsOf(b); track u) {
-                <button class="tnode unit" [class.on]="scope.filter().plant === u && onDash()" [class.inpath]="scope.filter().plant === u" (click)="goScope(b, u)">{{ u }}</button> }
+                <button class="tnode unit" [class.on]="scope.filter().plant === u && onDash()" [class.inpath]="scope.filter().plant === u" (click)="goScope(b, u)" [title]="u">{{ u }}</button> }
             </div>
           } }
       </div> }
