@@ -9,7 +9,6 @@
   <button class="hamb" (click)="hamb()" aria-label="Toggle menu" title="Collapse / expand menu">☰</button>
   <div class="apptitle"><b>INVENTORY MANAGEMENT</b><span>Management dashboard · {{ subtitleBus() }}</span></div>
   <span class="flex1"></span>
-  <span class="syncpill" title="Data source"><span class="dot ok"></span><span class="lbl">{{ syncText() }}</span></span>
   <button class="hbtn envbtn" title="Production / Test environment"><ic n="building" [size]="16"/><span class="lbl">Production</span></button>
   @if (auth.can('view.inventory')) { <button class="hbtn" routerLink="/matrix" [class.on]="url().startsWith('/matrix')" title="Matrix view — plants × categories"><ic n="grid" [size]="16"/><span class="lbl">Matrix view</span></button> }
   <button class="hbtn" (click)="toggleTheme()"><ic [n]="dark() ? 'sun' : 'moon'" [size]="16"/><span class="lbl">{{ dark() ? 'Light' : 'Dark' }}</span></button>

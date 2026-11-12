@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
@@ -81,6 +81,39 @@ export class ImportComponent {
   autoValidationError = signal('');
   autoErrorMessage = signal('');
   autoSelectedFile = signal<File | null>(null);
+
+  scheduledBanner = computed(() => {
+    const s = this.scope.settings();
+    const st = this.autoStatus();
+    const cfg = this.autoConfig();
+    const syncSource = s['sync.source'];
+    const syncLast = s['sync.lastRefresh'];
+
+    let fileName = cfg.fileName || '';
+    if (!fileName && syncSource) {
+      const m = /\(([^)]+)\)/.exec(syncSource);
+      if (m) fileName = m[1];
+    }
+    const label = syncSource || (fileName ? `Scheduled SAP import (${fileName})` : 'Scheduled SAP import');
+    const lastSynced = syncLast || st.lastSuccessfulImport;
+    const nextScheduled = st.nextScheduledImport;
+    const status = st.status || 'Active';
+    const isError = Boolean(st.lastError) || status.toLowerCase().includes('fail');
+    const isRunning = status.toLowerCase().includes('running');
+    const isWaiting = status.toLowerCase().includes('waiting');
+
+    return {
+      fileName,
+      label,
+      lastSynced,
+      nextScheduled,
+      status,
+      isError,
+      isRunning,
+      isWaiting,
+      folderPath: cfg.folderPath
+    };
+  });
 
   constructor() {
     this.api.get<any[]>('/masters/sync-log').subscribe(s => this.sync.set(s));

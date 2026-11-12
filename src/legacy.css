@@ -754,9 +754,9 @@
   /* ---------- Access control ---------- */
   body.locked > header.top, body.locked > .shell{visibility:hidden;}
   .authscreen{position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;padding:16px;overflow:auto;
-    background:radial-gradient(1200px 600px at 10% 0%, var(--orange-bg), transparent 60%), radial-gradient(900px 500px at 100% 100%, var(--blue-light), transparent 60%), var(--bg);}
+    background:linear-gradient(135deg, rgba(15, 23, 42, 0.65) 0%, rgba(30, 41, 59, 0.55) 100%), url('/login-bg.png') center center / cover no-repeat fixed, var(--bg);}
   .authscreen.hidden{display:none;}
-  .authcard{width:100%;max-width:440px;background:var(--surface);border:1px solid var(--border);border-radius:16px;box-shadow:0 20px 50px rgba(15,23,42,.12);padding:26px 26px 18px;}
+  .authcard{width:100%;max-width:440px;background:var(--surface);border:1px solid rgba(255, 255, 255, 0.4);border-radius:18px;box-shadow:0 25px 60px rgba(0,0,0,.35), 0 10px 25px rgba(0,0,0,.2);padding:28px 28px 20px;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);}
   .authcard:has(.authgrid){max-width:560px;}
   .authbrand{display:flex;flex-direction:column;align-items:flex-start;gap:6px;margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid var(--border);}
   .authbrand img{height:40px;max-width:180px;object-fit:contain;}
