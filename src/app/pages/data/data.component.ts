@@ -69,7 +69,7 @@ export class DataComponent {
     });
   }
   remove(x: CalcItem) {
-    if (!confirm(`Delete ${x.code} / ${x.batch || 'â€“'} at ${x.plant}?`)) return;
+    if (!confirm(`Delete ${x.code} / ${x.batch || '–'} at ${x.plant}?`)) return;
     this.api.deleteItem(x.id).subscribe({ next: () => { this.toast.show('Record deleted'); this.scope.refresh(); }, error: e => this.toast.show(errMsg(e)) });
   }
 }

@@ -106,7 +106,7 @@ export class InventoryComponent {
       ['Quality', sum(r, x => x.qVal), r.filter(x => x.qualityQty > 0).length, 't-amber', 'amber'], ['Blocked', sum(r, x => x.bVal), r.filter(x => x.blockedQty > 0).length, 't-red', 'red']] as [string, number, number, string, string][];
   });
   bucketCards = computed(() => BUCKETS.map((b, i) => { const r = this.all().filter(x => x.bucket === b); return { b, i, v: sum(r, x => x.value), n: r.length }; }));
-  bandCards = computed(() => { const t = this.t(); return ['Expired', 'â‰¤30', '31â€“90', '91â€“' + t.expiryDays].map((b, i) => { const r = this.all().filter(x => x.band === b); return { b, i, v: sum(r, x => x.value), n: r.length }; }); });
+  bandCards = computed(() => { const t = this.t(); return ['Expired', '≤30', '31–90', '91–' + t.expiryDays].map((b, i) => { const r = this.all().filter(x => x.band === b); return { b, i, v: sum(r, x => x.value), n: r.length }; }); });
   deptCards = computed(() => DEPTS.map(dp => { const r = this.all().filter(x => x.dept === dp); return { dp, v: sum(r, x => x.value), n: r.length, idle: r.filter(x => x.consStatus === 'Long Lying' || x.consStatus === 'Non-Moving').length }; }));
   totals = computed(() => ({ v: sum(this.rows(), x => x.value), n: this.rows().length }));
   noAction = computed(() => this.rows().filter(x => !this.openKeys().has(x.itemKey)).length);

@@ -27,9 +27,9 @@ import { Ic } from './ui';
         <input type="text" placeholder="Search description / code / batch" [ngModel]="q()" (ngModelChange)="typed($event)" (keydown.enter)="apply()"></div>
     </div>
     <div class="chips">
-      <span class="chip scope"><ic n="apartment" [size]="13"/> {{ scope.path().join(' â€º ') }}</span>
-      @for (c of active(); track c.k) { <span class="chip">{{ c.l }}: <b>{{ c.v }}</b><button (click)="clear(c.k)" title="Remove">âœ•</button></span> }
-      @if (active().length) { <button class="chip clear" (click)="clearAll()">Clear filters</button> } @else { <span class="hint">No filters â€” showing everything in {{ scope.title() }}</span> }
+      <span class="chip scope"><ic n="apartment" [size]="13"/> {{ scope.path().join(' › ') }}</span>
+      @for (c of active(); track c.k) { <span class="chip">{{ c.l }}: <b>{{ c.v }}</b><button (click)="clear(c.k)" title="Remove">✕</button></span> }
+      @if (active().length) { <button class="chip clear" (click)="clearAll()">Clear filters</button> } @else { <span class="hint">No filters — showing everything in {{ scope.title() }}</span> }
     </div>
   </div>`
 })

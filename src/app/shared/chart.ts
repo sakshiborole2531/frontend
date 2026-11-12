@@ -2,7 +2,7 @@ import { Directive, ElementRef, Input, OnChanges, OnDestroy, inject } from '@ang
 import { Chart, ChartConfiguration, registerables } from 'chart.js';
 Chart.register(...registerables);
 
-/** <canvas [chart]="config"> â€” creates / recreates a Chart.js chart, themed with the CSS variables. */
+/** <canvas [chart]="config"> — creates / recreates a Chart.js chart, themed with the CSS variables. */
 @Directive({ selector: 'canvas[chart]', standalone: true })
 export class ChartDirective implements OnChanges, OnDestroy {
   @Input() chart!: ChartConfiguration;

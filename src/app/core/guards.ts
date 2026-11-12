@@ -16,6 +16,6 @@ export const permGuard: CanActivateFn = route => {
   const auth = inject(AuthService), router = inject(Router), toast = inject(ToastService);
   const p = route.data['perm'];
   if (!p || auth.can(p)) return true;
-  toast.show('Access denied â€” your role cannot open this page');
+  toast.show('Access denied — your role cannot open this page');
   return router.parseUrl(auth.can('view.inventory') ? '/dashboard' : '/profile');
 };

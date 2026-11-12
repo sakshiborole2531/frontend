@@ -36,7 +36,7 @@ export class LoginComponent {
   constructor() {
     this.api.status().subscribe({
       next: s => { this.company.set(s.company); this.mode.set(s.needsSetup ? 'setup' : 'login'); },
-      error: () => { this.mode.set('login'); this.error.set('Cannot reach the server â€” check that the API is running.'); }
+      error: () => { this.mode.set('login'); this.error.set('Cannot reach the server — check that the API is running.'); }
     });
   }
   reasonText() { return this.msg === 'timeout' ? 'Your session timed out after inactivity. Please sign in again.' : this.msg === 'expired' ? 'Your session has ended. Please sign in again.' : ''; }

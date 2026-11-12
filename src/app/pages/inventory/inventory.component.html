@@ -1,20 +1,20 @@
-<div class="pagehead"><div><div class="eb"><span class="scopetag">{{ scope.path().join(' â€º ') }}</span>Inventory</div><h2>{{ page()[0] }}</h2><div class="q">{{ page()[1] }}</div></div></div>
+<div class="pagehead"><div><div class="eb"><span class="scopetag">{{ scope.path().join(' › ') }}</span>Inventory</div><h2>{{ page()[0] }}</h2><div class="q">{{ page()[1] }}</div></div></div>
 <filter-bar/>
 
 @switch (view()) {
   @case ('goods') {
     @if (p('cat') === 'All') {
       <div class="panel"><h2>Inventory by Category</h2><div class="desc">Click a category to see its batches. Consumables are covered under Consumables in the menu.</div>
-        <div class="tablewrap"><table><thead><tr><th>Category</th><th class="num">Materials</th><th class="num">Batches</th><th class="num">Unrestricted â‚¹</th><th class="num">Quality â‚¹</th><th class="num">Blocked â‚¹</th><th class="num">Total value</th><th class="num">Aged â‚¹</th><th class="num">Expiry â‰¤{{ t().expiryDays }}d â‚¹</th></tr></thead><tbody>
+        <div class="tablewrap"><table><thead><tr><th>Category</th><th class="num">Materials</th><th class="num">Batches</th><th class="num">Unrestricted ₹</th><th class="num">Quality ₹</th><th class="num">Blocked ₹</th><th class="num">Total value</th><th class="num">Aged ₹</th><th class="num">Expiry ≤{{ t().expiryDays }}d ₹</th></tr></thead><tbody>
           @for (r of catRows(); track r.c) { <tr (click)="set({ cat: r.c })" style="cursor:pointer"><td><span class="tag mat">{{ short[r.c] }}</span> <b>{{ r.c }}</b></td><td class="num">{{ r.mats }}</td><td class="num">{{ r.n }}</td><td class="num">{{ r.u | inr }}</td><td class="num">{{ r.q | inr }}</td><td class="num" style="color:var(--red)">{{ r.b | inr }}</td><td class="num"><b>{{ r.v | inr }}</b></td><td class="num">{{ r.aged | inr }}</td><td class="num">{{ r.exp | inr }}</td></tr> }
         </tbody></table></div></div>
     } @else {
-      <div class="crumbs"><a (click)="set({ cat: null, code: null })">Total Inventory</a><span class="sep">â€º</span><b>{{ p('cat') }}</b>@if (p('code', '')) {<span class="sep">â€º</span><b>{{ p('code', '') }}</b>}</div>
+      <div class="crumbs"><a (click)="set({ cat: null, code: null })">Total Inventory</a><span class="sep">›</span><b>{{ p('cat') }}</b>@if (p('code', '')) {<span class="sep">›</span><b>{{ p('code', '') }}</b>}</div>
     }
   }
   @case ('status') {
     <div class="cards">@for (c of statusCards(); track c[0]) {
-      <div class="card click {{ c[3] }}" [class.sel]="p('st') === c[0]" (click)="set({ st: c[0] })"><div class="label">{{ c[0] === 'All' ? 'All stock' : c[0] + ' stock' }}</div><div class="value {{ c[4] }}">{{ c[1] | inr }}</div><div class="sub">{{ c[2] }} batches Â· {{ pct(c[1], statusCards()[0][1]).toFixed(0) }}% of value</div></div> }</div>
+      <div class="card click {{ c[3] }}" [class.sel]="p('st') === c[0]" (click)="set({ st: c[0] })"><div class="label">{{ c[0] === 'All' ? 'All stock' : c[0] + ' stock' }}</div><div class="value {{ c[4] }}">{{ c[1] | inr }}</div><div class="sub">{{ c[2] }} batches · {{ pct(c[1], statusCards()[0][1]).toFixed(0) }}% of value</div></div> }</div>
   }
   @case ('aging') {
     <div class="toolbar"><div class="seg-tabs">
@@ -27,7 +27,7 @@
   }
   @case ('expiry') {
     <div class="cards">
-      <div class="card click t-navy" [class.sel]="p('band') === 'All'" (click)="set({ band: null })"><div class="label">Total expiry â‰¤{{ t().expiryDays }} days</div><div class="value">{{ totals().v | inr }}</div><div class="sub">{{ totals().n }} batches</div></div>
+      <div class="card click t-navy" [class.sel]="p('band') === 'All'" (click)="set({ band: null })"><div class="label">Total expiry ≤{{ t().expiryDays }} days</div><div class="value">{{ totals().v | inr }}</div><div class="sub">{{ totals().n }} batches</div></div>
       @for (b of bandCards(); track b.b) { <div class="card click" [class.t-red]="b.i < 2" [class.t-amber]="b.i >= 2" [class.sel]="p('band') === b.b" (click)="set({ band: p('band') === b.b ? null : b.b })">
         <div class="label">{{ b.b === 'Expired' ? 'Already expired' : b.b + ' days left' }}</div><div class="value" [class.red]="b.i < 2" [class.amber]="b.i >= 2">{{ b.v | inr }}</div><div class="sub">{{ b.n }} batches</div></div> }
       <div class="card t-red"><div class="label">Without action plan</div><div class="value red">{{ noAction() }}</div><div class="sub">assign an owner</div></div>
@@ -36,7 +36,7 @@
   @case ('cons') {
     <div class="cards">
       <div class="card click t-navy" [class.sel]="p('dept') === 'All'" (click)="set({ dept: null })"><div class="label">All departments</div><div class="value">{{ totals().v | inr }}</div><div class="sub">{{ totals().n }} items shown</div></div>
-      @for (c of deptCards(); track c.dp) { <div class="card click" [class.sel]="p('dept') === c.dp" (click)="set({ dept: p('dept') === c.dp ? null : c.dp })"><div class="label">{{ c.dp === 'QC' ? 'Quality Control (QC)' : c.dp }}</div><div class="value">{{ c.v | inr }}</div><div class="sub">{{ c.n }} items Â· <span [class.down]="c.idle" [class.up]="!c.idle">{{ c.idle }} idle</span></div></div> }
+      @for (c of deptCards(); track c.dp) { <div class="card click" [class.sel]="p('dept') === c.dp" (click)="set({ dept: p('dept') === c.dp ? null : c.dp })"><div class="label">{{ c.dp === 'QC' ? 'Quality Control (QC)' : c.dp }}</div><div class="value">{{ c.v | inr }}</div><div class="sub">{{ c.n }} items · <span [class.down]="c.idle" [class.up]="!c.idle">{{ c.idle }} idle</span></div></div> }
     </div>
     <div class="toolbar"><div class="seg-tabs">
       @for (o of [['All','All statuses'],['Idle','Long-lying or non-moving'],['LL365','Lying > ' + t().longLyingDays + ' d'],['A90','Aging > 90 d'],['A180','Aging > 180 d'],['Normal','Normal'],['Aging','Aging'],['Non-Moving','Non-Moving']]; track o[0]) {
@@ -45,27 +45,27 @@
 }
 
 <div class="panel">
-  <div class="toolbar"><h2 style="margin:0">{{ view() === 'cons' ? 'Item-level Consumable Inventory' : view() === 'expiry' ? 'Expiry â‰¤' + t().expiryDays + ' Days â€” Monitoring View' : 'Detail' }}</h2>
-    <span class="hint">{{ totals().n }} records Â· {{ totals().v | inr }}</span><span class="spacer"></span>
+  <div class="toolbar"><h2 style="margin:0">{{ view() === 'cons' ? 'Item-level Consumable Inventory' : view() === 'expiry' ? 'Expiry ≤' + t().expiryDays + ' Days — Monitoring View' : 'Detail' }}</h2>
+    <span class="hint">{{ totals().n }} records · {{ totals().v | inr }}</span><span class="spacer"></span>
     @if (auth.can('export.data')) { <button class="btn secondary small" (click)="export()">Export Excel</button> }</div>
-  @if (loading()) { <div class="loading">Loadingâ€¦</div> }
+  @if (loading()) { <div class="loading">Loading…</div> }
   <div class="tablewrap">
     <table mat-table [dataSource]="ds" matSort>
       <ng-container matColumnDef="plant"><th mat-header-cell *matHeaderCellDef mat-sort-header>Plant</th><td mat-cell *matCellDef="let x">{{ x.plant }}</td></ng-container>
       <ng-container matColumnDef="name"><th mat-header-cell *matHeaderCellDef mat-sort-header>Description</th><td mat-cell *matCellDef="let x">{{ x.name }}</td></ng-container>
       <ng-container matColumnDef="code"><th mat-header-cell *matHeaderCellDef mat-sort-header>Code</th><td mat-cell *matCellDef="let x"><a (click)="$event.stopPropagation(); view() === 'goods' && set({ cat: x.matType, code: x.code })">{{ x.code }}</a></td></ng-container>
-      <ng-container matColumnDef="batch"><th mat-header-cell *matHeaderCellDef mat-sort-header>Batch</th><td mat-cell *matCellDef="let x">{{ x.batch || 'â€“' }}</td></ng-container>
+      <ng-container matColumnDef="batch"><th mat-header-cell *matHeaderCellDef mat-sort-header>Batch</th><td mat-cell *matCellDef="let x">{{ x.batch || '–' }}</td></ng-container>
       <ng-container matColumnDef="matType"><th mat-header-cell *matHeaderCellDef mat-sort-header>Category</th><td mat-cell *matCellDef="let x"><span class="tag mat" [title]="x.matType">{{ short[x.matType] }}</span>{{ x.dept ? ' ' + x.dept : '' }}</td></ng-container>
       <ng-container matColumnDef="dept"><th mat-header-cell *matHeaderCellDef mat-sort-header>Department</th><td mat-cell *matCellDef="let x">{{ x.dept }}</td></ng-container>
-      <ng-container matColumnDef="subCat"><th mat-header-cell *matHeaderCellDef>Sub-category</th><td mat-cell *matCellDef="let x">{{ x.subCat || 'â€“' }}</td></ng-container>
+      <ng-container matColumnDef="subCat"><th mat-header-cell *matHeaderCellDef>Sub-category</th><td mat-cell *matCellDef="let x">{{ x.subCat || '–' }}</td></ng-container>
       <ng-container matColumnDef="qty"><th mat-header-cell *matHeaderCellDef mat-sort-header class="num">Qty</th><td mat-cell *matCellDef="let x" class="num">{{ x.qty | qty }} {{ x.uom }}</td></ng-container>
       <ng-container matColumnDef="unrestrictedQty"><th mat-header-cell *matHeaderCellDef mat-sort-header class="num">Unrestr. qty</th><td mat-cell *matCellDef="let x" class="num">{{ x.unrestrictedQty | qty }}</td></ng-container>
       <ng-container matColumnDef="qualityQty"><th mat-header-cell *matHeaderCellDef mat-sort-header class="num">Quality qty</th><td mat-cell *matCellDef="let x" class="num">{{ x.qualityQty | qty }}</td></ng-container>
       <ng-container matColumnDef="blockedQty"><th mat-header-cell *matHeaderCellDef mat-sort-header class="num">Blocked qty</th><td mat-cell *matCellDef="let x" class="num">{{ x.blockedQty | qty }}</td></ng-container>
       <ng-container matColumnDef="unitCost"><th mat-header-cell *matHeaderCellDef mat-sort-header class="num">Unit cost</th><td mat-cell *matCellDef="let x" class="num">{{ x.unitCost | inr }}</td></ng-container>
-      <ng-container matColumnDef="uVal"><th mat-header-cell *matHeaderCellDef mat-sort-header class="num">Unrestr. â‚¹</th><td mat-cell *matCellDef="let x" class="num">{{ x.uVal | inr }}</td></ng-container>
-      <ng-container matColumnDef="qVal"><th mat-header-cell *matHeaderCellDef mat-sort-header class="num">Quality â‚¹</th><td mat-cell *matCellDef="let x" class="num">{{ x.qVal | inr }}</td></ng-container>
-      <ng-container matColumnDef="bVal"><th mat-header-cell *matHeaderCellDef mat-sort-header class="num">Blocked â‚¹</th><td mat-cell *matCellDef="let x" class="num">{{ x.bVal | inr }}</td></ng-container>
+      <ng-container matColumnDef="uVal"><th mat-header-cell *matHeaderCellDef mat-sort-header class="num">Unrestr. ₹</th><td mat-cell *matCellDef="let x" class="num">{{ x.uVal | inr }}</td></ng-container>
+      <ng-container matColumnDef="qVal"><th mat-header-cell *matHeaderCellDef mat-sort-header class="num">Quality ₹</th><td mat-cell *matCellDef="let x" class="num">{{ x.qVal | inr }}</td></ng-container>
+      <ng-container matColumnDef="bVal"><th mat-header-cell *matHeaderCellDef mat-sort-header class="num">Blocked ₹</th><td mat-cell *matCellDef="let x" class="num">{{ x.bVal | inr }}</td></ng-container>
       <ng-container matColumnDef="value"><th mat-header-cell *matHeaderCellDef mat-sort-header class="num">Value</th><td mat-cell *matCellDef="let x" class="num"><b>{{ x.value | inr }}</b></td></ng-container>
       <ng-container matColumnDef="statusTags"><th mat-header-cell *matHeaderCellDef>Stock status</th><td mat-cell *matCellDef="let x"><status-tags [x]="x"/></td></ng-container>
       <ng-container matColumnDef="mfgDate"><th mat-header-cell *matHeaderCellDef mat-sort-header>Mfg date</th><td mat-cell *matCellDef="let x">{{ x.mfgDate | dt }}</td></ng-container>
@@ -81,7 +81,7 @@
       <ng-container matColumnDef="prio"><th mat-header-cell *matHeaderCellDef mat-sort-header>Priority</th><td mat-cell *matCellDef="let x"><prio-tag [p]="x.prio"/></td></ng-container>
       <ng-container matColumnDef="action"><th mat-header-cell *matHeaderCellDef>Action</th><td mat-cell *matCellDef="let x" class="wrap">
         @if (actionOf(x); as a) { <span class="wrap">{{ a.plan }}</span> <span class="hint">({{ a.functionName }}, {{ a.targetDate | dt }})</span> }
-        @else if (realFlags(x.flags).length && auth.can('action.create')) { <button class="btn small" (click)="assign(x, $event)">Assign</button> } @else { â€“ }</td></ng-container>
+        @else if (realFlags(x.flags).length && auth.can('action.create')) { <button class="btn small" (click)="assign(x, $event)">Assign</button> } @else { – }</td></ng-container>
       <tr mat-header-row *matHeaderRowDef="cols(); sticky: true"></tr>
       <tr mat-row *matRowDef="let x; columns: cols()" (click)="open(x)" style="cursor:pointer"></tr>
       <tr class="mat-row" *matNoDataRow><td class="empty" [attr.colspan]="cols().length">No records</td></tr>

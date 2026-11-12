@@ -2,7 +2,7 @@
   <div class="authcard">
     <div class="authbrand"><div class="wm"><b>UNICHEM</b><span>{{ company() }}</span></div><div class="authapp">Inventory Management Dashboard</div></div>
     @switch (mode()) {
-      @case ('loading') { <div class="loading">Connectingâ€¦</div> }
+      @case ('loading') { <div class="loading">Connecting…</div> }
       @case ('login') {
         <h2>Sign in</h2>
         @if (reasonText()) { <div class="authmsg">{{ reasonText() }}</div> }
@@ -12,17 +12,17 @@
           <label>Password<input type="password" formControlName="password" autocomplete="current-password"></label>
           @if (t(login, 'password')) { <div class="err">Enter your password</div> }
           <div class="autherr">{{ error() }}</div>
-          <button class="btn" type="submit" [disabled]="busy()" style="width:100%;justify-content:center">{{ busy() ? 'Signing inâ€¦' : 'Sign in' }}</button>
+          <button class="btn" type="submit" [disabled]="busy()" style="width:100%;justify-content:center">{{ busy() ? 'Signing in…' : 'Sign in' }}</button>
         </form>
         <div class="authlinks"><a (click)="openRequest()">New user? Request access</a><span class="hint">Forgot password? Ask an administrator.</span></div>
       }
       @case ('setup') {
         <h2>Set up the administrator</h2>
-        <div class="hint" style="margin-bottom:12px">No users exist yet. Create the first administrator account â€” it can then add other users and assign roles and data access.</div>
+        <div class="hint" style="margin-bottom:12px">No users exist yet. Create the first administrator account — it can then add other users and assign roles and data access.</div>
         <form [formGroup]="setup" (ngSubmit)="doSetup()">
           <div class="authgrid"><label>Full name<input type="text" formControlName="name"></label><label>Username<input type="text" formControlName="username"></label></div>
           @if (t(setup, 'username')) { <div class="err">Username: 3+ letters, digits, . _ -</div> }
-          <div class="authgrid"><label>Email<input type="email" formControlName="email"></label><label>Designation<input type="text" formControlName="designation" placeholder="e.g. Head â€“ IT"></label></div>
+          <div class="authgrid"><label>Email<input type="email" formControlName="email"></label><label>Designation<input type="text" formControlName="designation" placeholder="e.g. Head – IT"></label></div>
           <div class="authgrid"><label>Password<input type="password" formControlName="password" autocomplete="new-password"></label><label>Confirm password<input type="password" formControlName="confirm" autocomplete="new-password"></label></div>
           @if (setup.get('password')?.errors?.['policy'] && setup.get('password')?.touched) { <div class="err">Password needs {{ setup.get('password')?.errors?.['policy'] }}.</div> }
           @if (setup.errors?.['mismatch'] && setup.get('confirm')?.touched) { <div class="err">Passwords do not match.</div> }
@@ -44,11 +44,11 @@
           <div class="autherr">{{ error() }}</div>
           <button class="btn" type="submit" style="width:100%;justify-content:center">Submit request</button>
         </form>
-        <div class="authlinks"><a (click)="mode.set('login')">â† Back to sign in</a></div>
+        <div class="authlinks"><a (click)="mode.set('login')">← Back to sign in</a></div>
       }
       @case ('requested') {
         <h2>Request submitted</h2><p>An administrator will review your request and share a temporary password with you.</p>
-        <div class="authlinks"><a (click)="mode.set('login')">â† Back to sign in</a></div>
+        <div class="authlinks"><a (click)="mode.set('login')">← Back to sign in</a></div>
       }
       @case ('change') {
         <h2>Change password</h2><div class="hint" style="margin-bottom:12px">You signed in with a temporary password. Choose a new one to continue.</div>

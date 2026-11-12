@@ -12,7 +12,7 @@ import { ScopeService } from '../../core/scope.service';
   template: `
   <div mat-dialog-content>
     <div class="mhead"><div><div class="eyebrow">{{ data.user ? 'Edit user' : data.request ? 'Approve access request' : 'New user' }}</div><h3>{{ data.user?.name || data.request?.name || 'Add user' }}</h3>
-      @if (data.request) {<div class="hint">Justification: {{ data.request.justification }}</div>}</div><button class="x" mat-dialog-close>Ã—</button></div>
+      @if (data.request) {<div class="hint">Justification: {{ data.request.justification }}</div>}</div><button class="x" mat-dialog-close>×</button></div>
     @if (self) {<div class="note" style="margin-bottom:10px">You are editing your own account. Role, privileges, data access, validity and status can only be changed by another administrator.</div>}
     <form class="entry" [formGroup]="f" (ngSubmit)="save()">
       <div class="fgroup"><label>Full name *</label><input type="text" formControlName="name">@if (bad('name')) {<div class="err">Required</div>}</div>
@@ -24,7 +24,7 @@ import { ScopeService } from '../../core/scope.service';
       <div class="fgroup"><label>Department</label><input type="text" formControlName="department"></div>
       <div class="fgroup"><label>Location</label><input type="text" formControlName="location"></div>
       <div class="fgroup"><label>Role *</label><select formControlName="role">@for (r of data.roles; track r.code) {<option [value]="r.code">{{ r.label }}</option>}</select></div>
-      <div class="fgroup"><label>Function (own actions)</label><select formControlName="functionName"><option value="">â€”</option>@for (fn of scope.masters()?.functions ?? []; track fn) {<option [value]="fn">{{ fn }}</option>}</select></div>
+      <div class="fgroup"><label>Function (own actions)</label><select formControlName="functionName"><option value="">—</option>@for (fn of scope.masters()?.functions ?? []; track fn) {<option [value]="fn">{{ fn }}</option>}</select></div>
       <div class="fgroup"><label>Account valid until</label><input type="date" formControlName="validUntil"></div>
       <div class="fgroup"><label>Status</label><select formControlName="active"><option [ngValue]="true">Active</option><option [ngValue]="false">Inactive</option></select></div>
       <div class="fgroup full"><label>Data access</label>
@@ -36,13 +36,13 @@ import { ScopeService } from '../../core/scope.service';
             <div class="spbu"><label class="chk"><input type="checkbox" [checked]="bus.has(b)" (change)="tog(bus, b)" [disabled]="self"> <b>{{ b }}</b> <span class="hint">whole BU</span></label>
               <div class="spunits">@for (u of scope.unitsOf(b); track u) {<label class="chk"><input type="checkbox" [checked]="units.has(u)" (change)="tog(units, u)" [disabled]="self || bus.has(b)"> {{ u }}</label>}</div></div> }</div> }
       </div>
-      <details class="fgroup full privbox"><summary><b>Individual privileges</b> <span class="hint">â€” grant extra permissions or restrict role permissions for this user only</span></summary>
+      <details class="fgroup full privbox"><summary><b>Individual privileges</b> <span class="hint">— grant extra permissions or restrict role permissions for this user only</span></summary>
         <table class="plain privtbl"><thead><tr><th>Permission</th><th>Override</th><th>Until</th></tr></thead><tbody>
-          @for (p of data.permissions; track p) { <tr><td>{{ p }}{{ data.privileged.includes(p) ? ' ðŸ”’' : '' }}</td>
+          @for (p of data.permissions; track p) { <tr><td>{{ p }}{{ data.privileged.includes(p) ? ' 🔒' : '' }}</td>
             <td><select [value]="grants[p]?.mode || ''" (change)="setGrant(p, $any($event.target).value)" [disabled]="self"><option value="">Role default</option><option value="grant">Grant</option><option value="deny">Restrict</option></select></td>
             <td><input type="date" [value]="grants[p]?.until || ''" (change)="setUntil(p, $any($event.target).value)" [disabled]="self || !grants[p]"></td></tr> }
         </tbody></table></details>
-      <div class="fgroup full"><label>Reason / ticket reference <span class="hint">(required when privileged ðŸ”’ access is added)</span></label><input type="text" formControlName="reason" placeholder="e.g. IT-REQ-2026-1142"></div>
+      <div class="fgroup full"><label>Reason / ticket reference <span class="hint">(required when privileged 🔒 access is added)</span></label><input type="text" formControlName="reason" placeholder="e.g. IT-REQ-2026-1142"></div>
       @if (error()) {<div class="full autherr">{{ error() }}</div>}
       <div class="actions"><button class="btn" type="submit" [disabled]="busy()">{{ data.user ? 'Save changes' : data.request ? 'Approve & create user' : 'Create user' }}</button><button type="button" class="btn secondary" mat-dialog-close>Cancel</button></div>
     </form>

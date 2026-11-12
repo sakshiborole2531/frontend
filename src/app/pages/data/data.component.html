@@ -2,18 +2,18 @@
 <div class="grid2">
   <div class="panel"><h2>Data Exceptions by Type</h2><div class="desc">Incomplete data weakens aging, expiry and value KPIs</div>
     <table class="plain"><tbody>@for (g of groups(); track g[0]) {<tr><td><span class="tag warn">{{ g[0] }}</span></td><td class="num"><b>{{ g[1] }}</b></td></tr>}
-      @empty {<tr><td class="empty">No open data exceptions âœ“</td></tr>}</tbody></table></div>
+      @empty {<tr><td class="empty">No open data exceptions ✓</td></tr>}</tbody></table></div>
   <div class="panel"><h2>Records to Fix ({{ issues().length }})</h2><div class="desc">Fix at source (SAP) or in the form below.</div>
     <div class="tablewrap short"><table><thead><tr><th>Code</th><th>Batch</th><th>Plant</th><th>Issue</th><th></th></tr></thead><tbody>
-      @for (i of issues().slice(0, 300); track i.id + i.issue) {<tr><td>{{ i.code }}</td><td>{{ i.batch || 'â€“' }}</td><td>{{ i.plant }}</td><td class="wrap"><span class="tag warn">{{ i.issue }}</span></td>
+      @for (i of issues().slice(0, 300); track i.id + i.issue) {<tr><td>{{ i.code }}</td><td>{{ i.batch || '–' }}</td><td>{{ i.plant }}</td><td class="wrap"><span class="tag warn">{{ i.issue }}</span></td>
         <td>@if (auth.can('data.edit')) {<button class="btn secondary small" (click)="edit(i.id)">Fix</button>}</td></tr>}
-      @empty {<tr><td colspan="5" class="empty">Nothing to fix âœ“</td></tr>}</tbody></table></div></div>
+      @empty {<tr><td colspan="5" class="empty">Nothing to fix ✓</td></tr>}</tbody></table></div></div>
 </div>
 @if (auth.can('data.edit')) {
 <div class="gap"></div>
 <div class="panel" id="entryPanel"><h2>{{ editing() ? 'Edit Record' : 'Add Inventory Record' }}</h2><div class="desc">Stock quantities follow SAP stock types: Unrestricted, Quality inspection, Blocked. Plants and storage locations come from Masters.</div>
   <form class="entry" [formGroup]="form" (ngSubmit)="save()">
-    <div class="fgroup"><label>Plant *</label><select formControlName="plant"><option value="" disabled>Selectâ€¦</option>@for (p of plants(); track p) {<option [value]="p">{{ p }}</option>}</select>@if (bad('plant')) {<div class="err">Plant is required</div>}</div>
+    <div class="fgroup"><label>Plant *</label><select formControlName="plant"><option value="" disabled>Select…</option>@for (p of plants(); track p) {<option [value]="p">{{ p }}</option>}</select>@if (bad('plant')) {<div class="err">Plant is required</div>}</div>
     <div class="fgroup"><label>Material category *</label><select formControlName="matType">@for (c of cats; track c) {<option [value]="c">{{ c }}</option>}</select></div>
     <div class="fgroup"><label>Storage location</label><input type="text" formControlName="storageLoc" list="slocDL" placeholder="Select or type"><datalist id="slocDL">@for (s of slocs(); track s) {<option [value]="s"></option>}</datalist></div>
     @if (isCons()) {<div class="fgroup"><label>Department *</label><select formControlName="dept">@for (d of depts; track d) {<option [value]="d">{{ d }}</option>}</select></div>} @else {<div></div>}
@@ -21,7 +21,7 @@
     <div class="fgroup"><label>Material description *</label><input type="text" formControlName="name">@if (bad('name')) {<div class="err">Required</div>}</div>
     <div class="fgroup"><label>Batch / Lot</label><input type="text" formControlName="batch"></div>
     <div class="fgroup"><label>UOM</label><input type="text" formControlName="uom" placeholder="KG / NOS / LTR"></div>
-    <div class="fgroup"><label>Unit cost (â‚¹) *</label><input type="number" step="any" min="0" formControlName="unitCost">@if (bad('unitCost')) {<div class="err">Enter a cost â‰¥ 0</div>}</div>
+    <div class="fgroup"><label>Unit cost (₹) *</label><input type="number" step="any" min="0" formControlName="unitCost">@if (bad('unitCost')) {<div class="err">Enter a cost ≥ 0</div>}</div>
     <div class="fgroup"><label>Unrestricted qty</label><input type="number" step="any" min="0" formControlName="unrestrictedQty"></div>
     <div class="fgroup"><label>Quality inspection qty</label><input type="number" step="any" min="0" formControlName="qualityQty"></div>
     <div class="fgroup"><label>Blocked qty</label><input type="number" step="any" min="0" formControlName="blockedQty"></div>
@@ -47,7 +47,7 @@
     <ng-container matColumnDef="cat"><th mat-header-cell *matHeaderCellDef>Category</th><td mat-cell *matCellDef="let x">{{ x.matType }}{{ x.dept ? ' (' + x.dept + ')' : '' }}</td></ng-container>
     <ng-container matColumnDef="code"><th mat-header-cell *matHeaderCellDef>Code</th><td mat-cell *matCellDef="let x">{{ x.code }}</td></ng-container>
     <ng-container matColumnDef="name"><th mat-header-cell *matHeaderCellDef>Description</th><td mat-cell *matCellDef="let x">{{ x.name }}</td></ng-container>
-    <ng-container matColumnDef="batch"><th mat-header-cell *matHeaderCellDef>Batch</th><td mat-cell *matCellDef="let x">{{ x.batch || 'â€“' }}</td></ng-container>
+    <ng-container matColumnDef="batch"><th mat-header-cell *matHeaderCellDef>Batch</th><td mat-cell *matCellDef="let x">{{ x.batch || '–' }}</td></ng-container>
     <ng-container matColumnDef="qty"><th mat-header-cell *matHeaderCellDef class="num">U / Q / B qty</th><td mat-cell *matCellDef="let x" class="num">{{ x.unrestrictedQty | qty }} / {{ x.qualityQty | qty }} / {{ x.blockedQty | qty }}</td></ng-container>
     <ng-container matColumnDef="value"><th mat-header-cell *matHeaderCellDef class="num">Value</th><td mat-cell *matCellDef="let x" class="num">{{ x.value | inr }}</td></ng-container>
     <ng-container matColumnDef="status"><th mat-header-cell *matHeaderCellDef>Status</th><td mat-cell *matCellDef="let x"><status-tags [x]="x"/></td></ng-container>

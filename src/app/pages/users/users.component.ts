@@ -9,7 +9,7 @@ import { fmtDT } from '../../core/format';
 import { TempPasswordDialog } from '../../shared/dialogs';
 import { UserFormDialog } from './user-form.dialog';
 
-/** Users & Access: users, access requests, roles Ã— permissions, audit log. */
+/** Users & Access: users, access requests, roles × permissions, audit log. */
 @Component({ standalone: true, imports: [FormsModule], templateUrl: './users.component.html' })
 export class UsersComponent {
   api = inject(ApiService); auth = inject(AuthService); private dlg = inject(MatDialog); private toast = inject(ToastService);

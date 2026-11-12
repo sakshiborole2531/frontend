@@ -41,7 +41,7 @@ export class YearsComponent {
     const ys = this.years(); if (!ys.length) return null;
     const div = Math.max(...ys.map(y => y.v)) >= 1e7 ? 1e7 : 1e5;
     return { type: 'bar', data: { labels: ys.map(y => 'FY ' + y.fy + (y.partial ? ' (YTD)' : '')), datasets: MAT_TYPES.map(t => ({ label: t, data: ys.map(y => +((y.cat?.[t] || 0) / div).toFixed(2)), backgroundColor: CAT_COLORS[t], maxBarThickness: 70 })) },
-      options: { maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { boxWidth: 10 } } }, scales: { x: { stacked: true, grid: { display: false } }, y: { stacked: true, title: { display: true, text: div === 1e7 ? 'â‚¹ Crore' : 'â‚¹ Lakh' } } } } };
+      options: { maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { boxWidth: 10 } } }, scales: { x: { stacked: true, grid: { display: false } }, y: { stacked: true, title: { display: true, text: div === 1e7 ? '₹ Crore' : '₹ Lakh' } } } } };
   });
   trendChart = computed<ChartConfiguration | null>(() => {
     const ms = this.months(); if (!ms.length) return null;

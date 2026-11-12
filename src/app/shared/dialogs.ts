@@ -16,19 +16,19 @@ import { UI } from './ui';
   template: `
   @if (x(); as x) {
   <div mat-dialog-content>
-    <div class="mhead"><div><div class="eyebrow">{{ x.matType }}{{ x.dept ? ' Â· ' + x.dept : '' }} Â· {{ x.bu }}</div><h3>{{ x.name }}</h3>
-      <div class="hint">{{ x.code }} Â· Batch {{ x.batch || 'â€“' }} Â· {{ x.plant }} Â· {{ x.storageLoc || 'no storage location' }}</div></div>
-      <button class="x" mat-dialog-close>Ã—</button></div>
+    <div class="mhead"><div><div class="eyebrow">{{ x.matType }}{{ x.dept ? ' · ' + x.dept : '' }} · {{ x.bu }}</div><h3>{{ x.name }}</h3>
+      <div class="hint">{{ x.code }} · Batch {{ x.batch || '–' }} · {{ x.plant }} · {{ x.storageLoc || 'no storage location' }}</div></div>
+      <button class="x" mat-dialog-close>×</button></div>
     <div class="kv">
       <div><span>Unrestricted qty</span><b>{{ x.unrestrictedQty | qty }} {{ x.uom }}</b></div><div><span>Quality qty</span><b>{{ x.qualityQty | qty }} {{ x.uom }}</b></div>
       <div><span>Blocked qty</span><b>{{ x.blockedQty | qty }} {{ x.uom }}</b></div><div><span>Total qty</span><b>{{ x.qty | qty }} {{ x.uom }}</b></div>
       <div><span>Unit cost</span><b>{{ x.unitCost | inr }}</b></div><div><span>Total value</span><b>{{ x.value | inr }}</b></div>
       <div><span>Blocked value</span><b>{{ x.bVal | inr }}</b></div><div><span>Stock status</span><b><status-tags [x]="x"/></b></div>
-      <div><span>GR posting date</span><b>{{ x.receiptDate | dt }}</b></div><div><span>Inventory age</span><b>{{ x.age === null ? 'â€“' : x.age + ' days (' + x.bucket + ')' }}</b></div>
+      <div><span>GR posting date</span><b>{{ x.receiptDate | dt }}</b></div><div><span>Inventory age</span><b>{{ x.age === null ? '–' : x.age + ' days (' + x.bucket + ')' }}</b></div>
       <div><span>Date of manufacture</span><b>{{ x.mfgDate | dt }}</b></div><div><span>SLED/BBD ({{ x.dateType }})</span><b>{{ x.expiryDate | dt }}</b></div>
-      <div><span>Remaining shelf life</span><b [style.color]="x.rsl !== null && x.rsl < 0 ? 'var(--red)' : ''">{{ x.rsl === null ? 'â€“' : x.rsl < 0 ? 'Expired ' + (-x.rsl) + ' days ago' : x.rsl + ' days' }}</b></div>
-      <div><span>Shelf life used</span><b>{{ x.slUsed === null ? 'â€“' : x.slUsed + '% of ' + x.slTotal + ' days' }}</b></div>
-      <div><span>Last posting (consumption)</span><b>{{ x.lastIssueDate | dt }}</b></div><div><span>Movement</span><b>{{ x.movement }}{{ x.idle !== null ? ' Â· ' + x.idle + ' days' : '' }}</b></div>
+      <div><span>Remaining shelf life</span><b [style.color]="x.rsl !== null && x.rsl < 0 ? 'var(--red)' : ''">{{ x.rsl === null ? '–' : x.rsl < 0 ? 'Expired ' + (-x.rsl) + ' days ago' : x.rsl + ' days' }}</b></div>
+      <div><span>Shelf life used</span><b>{{ x.slUsed === null ? '–' : x.slUsed + '% of ' + x.slTotal + ' days' }}</b></div>
+      <div><span>Last posting (consumption)</span><b>{{ x.lastIssueDate | dt }}</b></div><div><span>Movement</span><b>{{ x.movement }}{{ x.idle !== null ? ' · ' + x.idle + ' days' : '' }}</b></div>
       @if (x.consStatus) {<div><span>Consumable status</span><b><span class="tag {{ cc(x.consStatus) }}">{{ x.consStatus }}</span></b></div>}
       @if (x.blockReason) {<div><span>Block reason</span><b>{{ x.blockReason }}</b></div>}
       @if (x.remarks) {<div><span>Remarks</span><b>{{ x.remarks }}</b></div>}
@@ -38,12 +38,12 @@ import { UI } from './ui';
     <h4>Actions ({{ acts().length }})</h4>
     @if (acts().length) {
       <table class="plain"><thead><tr><th>ID</th><th>Plan</th><th>Owner</th><th>Target</th><th>Stage</th></tr></thead><tbody>
-      @for (a of acts(); track a.id) { <tr><td>{{ a.id }}</td><td class="wrap">{{ a.plan }}</td><td>{{ a.functionName }}{{ a.person ? ' â€“ ' + a.person : '' }}</td><td>{{ a.targetDate | dt }}</td><td><span class="tag {{ sc(a.stage) }}">{{ a.stage }}</span></td></tr> }
+      @for (a of acts(); track a.id) { <tr><td>{{ a.id }}</td><td class="wrap">{{ a.plan }}</td><td>{{ a.functionName }}{{ a.person ? ' – ' + a.person : '' }}</td><td>{{ a.targetDate | dt }}</td><td><span class="tag {{ sc(a.stage) }}">{{ a.stage }}</span></td></tr> }
       </tbody></table> } @else { <div class="hint">No actions raised for this batch yet.</div> }
     <div class="mfoot">
       @if (canRaise()) { <button class="btn" (click)="raise()">Raise action</button> }
       <button class="btn secondary" mat-dialog-close>Close</button></div>
-  </div> } @else { <div class="loading">Loadingâ€¦</div> }`
+  </div> } @else { <div class="loading">Loading…</div> }`
 })
 export class RecordDialog {
   private api = inject(ApiService); private dlg = inject(MatDialog); private ref = inject(MatDialogRef<RecordDialog>);
@@ -61,18 +61,18 @@ export class RecordDialog {
   raise() { const x = this.x()!; this.ref.close(); openActionForm(this.dlg, { item: x }); }
 }
 
-/** Assign ownership & action â€” reactive form with validation. */
+/** Assign ownership & action — reactive form with validation. */
 @Component({
   standalone: true, imports: [MatDialogModule, ReactiveFormsModule, ...UI],
   template: `
   <div mat-dialog-content>
     <div class="mhead"><div><div class="eyebrow">{{ data.action ? 'Update action ' + data.action.id : 'Assign ownership & action' }}</div>
       <h3>{{ data.item?.name || data.action?.name || 'General action' }}</h3>
-      @if (data.item) {<div class="hint">{{ data.item.code }} Â· Batch {{ data.item.batch || 'â€“' }} Â· {{ data.item.plant }} Â· {{ data.item.value | inr }}</div>}</div>
-      <button class="x" mat-dialog-close>Ã—</button></div>
+      @if (data.item) {<div class="hint">{{ data.item.code }} · Batch {{ data.item.batch || '–' }} · {{ data.item.plant }} · {{ data.item.value | inr }}</div>}</div>
+      <button class="x" mat-dialog-close>×</button></div>
     <form class="entry" [formGroup]="form" (ngSubmit)="save()">
       @if (!data.item && (!data.action || !data.action.itemKey)) {
-        <div class="fgroup full"><label>Subject (material / area) *</label><input type="text" formControlName="name" placeholder="e.g. Close 5S observations â€“ Bay 3">
+        <div class="fgroup full"><label>Subject (material / area) *</label><input type="text" formControlName="name" placeholder="e.g. Close 5S observations – Bay 3">
           @if (bad('name')) {<div class="err">Subject is required</div>}</div> }
       <div class="fgroup full"><label>Exception</label><input type="text" formControlName="exception"></div>
       <div class="fgroup"><label>Action type *</label><select formControlName="actionType">@for (t of types(); track t) {<option [value]="t">{{ t }}</option>}</select></div>
@@ -141,9 +141,9 @@ export function openActionForm(dlg: MatDialog, data: ActionFormData) {
   standalone: true, imports: [MatDialogModule, ReactiveFormsModule],
   template: `
   <div mat-dialog-content>
-    <div class="mhead"><div><div class="eyebrow">Closure Â· {{ data.id }}</div><h3>{{ data.plan || data.actionType }}</h3>
-      <div class="hint">{{ data.name }} {{ data.batch ? 'Â· ' + data.batch : '' }} Â· Owner {{ data.functionName }}{{ data.person ? ' â€“ ' + data.person : '' }}</div></div>
-      <button class="x" mat-dialog-close>Ã—</button></div>
+    <div class="mhead"><div><div class="eyebrow">Closure · {{ data.id }}</div><h3>{{ data.plan || data.actionType }}</h3>
+      <div class="hint">{{ data.name }} {{ data.batch ? '· ' + data.batch : '' }} · Owner {{ data.functionName }}{{ data.person ? ' – ' + data.person : '' }}</div></div>
+      <button class="x" mat-dialog-close>×</button></div>
     <form class="entry" [formGroup]="form" (ngSubmit)="save()">
       <div class="fgroup"><label>Closed on *</label><input type="date" formControlName="closedDate" [max]="today"></div>
       <div class="fgroup" style="grid-column:span 3"><label>Outcome</label><select formControlName="outcome">@for (o of outcomes; track o) {<option>{{ o }}</option>}</select></div>
@@ -159,7 +159,7 @@ export class CloseDialog {
   private ref = inject(MatDialogRef<CloseDialog>); private scope = inject(ScopeService);
   data = inject<Action>(MAT_DIALOG_DATA);
   today = todayISO(); error = signal('');
-  outcomes = ['Consumed / utilised', 'Released by QC', 'Transferred', 'Retested â€” shelf life extended', 'Disposed / written off', 'Rationalised â€” re-order stopped', 'Other'];
+  outcomes = ['Consumed / utilised', 'Released by QC', 'Transferred', 'Retested — shelf life extended', 'Disposed / written off', 'Rationalised — re-order stopped', 'Other'];
   form = this.fb.nonNullable.group({ closedDate: [todayISO(), Validators.required], outcome: [this.outcomes[0]], closure: ['', Validators.required] });
   save() {
     this.form.markAllAsTouched(); if (this.form.invalid) return;
@@ -193,7 +193,7 @@ export class PasswordDialog {
   standalone: true, imports: [MatDialogModule],
   template: `
   <div mat-dialog-content>
-    <div class="mhead"><div><div class="eyebrow">Temporary password</div><h3>{{ data.username }}</h3></div><button class="x" mat-dialog-close>Ã—</button></div>
+    <div class="mhead"><div><div class="eyebrow">Temporary password</div><h3>{{ data.username }}</h3></div><button class="x" mat-dialog-close>×</button></div>
     <p>Share this temporary password with <b>{{ data.username }}</b> securely. It is shown only once; the user must set a new password at first sign-in.</p>
     <div class="temppw"><code>{{ data.temporaryPassword }}</code><button class="btn secondary small" (click)="copy()">Copy</button></div>
     <div class="mfoot"><button class="btn" mat-dialog-close>Done</button></div>

@@ -661,11 +661,11 @@
   .herolg{display:flex;gap:12px;flex-wrap:wrap;margin-top:7px;font-size:11px;opacity:.95;}
   .herolg i{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:4px;}
   .herom{font-size:11.5px;margin-top:6px;} .hero .up{color:#86efac;} .hero .down{color:#fca5a5;}
-  .kidwrap{margin-bottom:12px;}
+  .kidwrap{margin-bottom:12px;width:100%;}
   .kidtitle{font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--mute);margin:0 0 8px;display:flex;gap:10px;align-items:baseline;}
   .kidtitle span{font-weight:600;letter-spacing:0;text-transform:none;font-size:11px;color:#a0a9b8;}
-  .kids{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px;}
-  .kid{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:12px 14px;cursor:pointer;box-shadow:var(--shadow);position:relative;overflow:hidden;transition:.15s;--kc:#3b5bdb;}
+  .kids{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px;width:100%;}
+  .kid{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:12px 14px;cursor:pointer;box-shadow:var(--shadow);position:relative;overflow:hidden;transition:.15s;--kc:#3b5bdb;display:flex;flex-direction:column;justify-content:space-between;min-height:140px;}
   .kid::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--kc);}
   .kid:hover{transform:translateY(-2px);box-shadow:var(--shadow-lg);border-color:var(--kc);}
   .kid.on{border-color:var(--kc);box-shadow:0 0 0 3px color-mix(in srgb,var(--kc) 20%,transparent);}
@@ -679,7 +679,7 @@
   .kidv small{font-size:11px;color:var(--mute);font-weight:600;margin-left:6px;}
   .kidbar{display:flex;height:6px;border-radius:4px;overflow:hidden;background:var(--surface2);}
   .kidbar i{display:block;height:100%;}
-  .kids.few{grid-template-columns:repeat(auto-fit,minmax(300px,1fr));}
+  .kids.few{grid-template-columns:repeat(auto-fit,minmax(250px,1fr));}
   .kids.few .kidm{grid-template-columns:repeat(4,auto);justify-content:space-between;}
   .kidm span{white-space:nowrap;}
   .kidm{display:grid;grid-template-columns:1fr 1fr;gap:3px 10px;margin-top:8px;font-size:11.5px;font-weight:600;font-variant-numeric:tabular-nums;}

@@ -14,7 +14,7 @@ import { Me } from '../../core/models';
   @if (auth.me(); as u) {
   <div class="pagehead"><div><div class="eb">Account</div><h2>My Profile</h2><div class="q">Your details, access, password and preferences</div></div></div>
   <div class="profhead"><div class="pav">{{ ini(u.name) }}</div>
-    <div><h2>{{ u.name }}</h2><div class="hint">{{ u.designation }} {{ u.department ? 'Â· ' + u.department : '' }} {{ u.location ? 'Â· ' + u.location : '' }}</div>
+    <div><h2>{{ u.name }}</h2><div class="hint">{{ u.designation }} {{ u.department ? '· ' + u.department : '' }} {{ u.location ? '· ' + u.location : '' }}</div>
       <div style="margin-top:6px"><span class="tag info">{{ u.roleLabel }}</span> <span class="tag mat">{{ scopeText(u) }}</span> <span class="tag ok">&#64;{{ u.username }}</span></div></div>
     <span style="flex:1"></span><button class="btn" (click)="auth.logout()">Sign out</button></div>
   <div class="grid2">
@@ -27,7 +27,7 @@ import { Me } from '../../core/models';
         <div class="fgroup"><label>Designation</label><input type="text" formControlName="designation"></div>
         <div class="fgroup"><label>Department</label><input type="text" formControlName="department"></div>
         <div class="fgroup"><label>Location</label><input type="text" formControlName="location"></div>
-        <div class="fgroup"><label>Responsible function</label><input type="text" [value]="u.functionName || 'â€”'" disabled></div>
+        <div class="fgroup"><label>Responsible function</label><input type="text" [value]="u.functionName || '—'" disabled></div>
         <div class="fgroup full"><button class="btn" type="submit" [disabled]="form.invalid">Save details</button></div></form></div>
     <div class="panel"><h2>Change password</h2>
       <form class="formgrid" style="grid-template-columns:1fr" [formGroup]="pw" (ngSubmit)="changePw()">

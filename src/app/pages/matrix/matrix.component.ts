@@ -6,7 +6,7 @@ import { ScopeService } from '../../core/scope.service';
 import { fmtV } from '../../core/format';
 import { FilterBarComponent } from '../../shared/filter-bar.component';
 
-/** Plants (rows) Ã— categories (columns) with totals and Green / Yellow / Red / Dark-red health colouring. */
+/** Plants (rows) × categories (columns) with totals and Green / Yellow / Red / Dark-red health colouring. */
 @Component({ standalone: true, imports: [FormsModule, FilterBarComponent], templateUrl: './matrix.component.html' })
 export class MatrixComponent {
   api = inject(ApiService); scope = inject(ScopeService); private router = inject(Router);
@@ -18,12 +18,12 @@ export class MatrixComponent {
     effect(() => { const f = this.scope.filter(); this.scope.version(); this.api.matrix(this.measure(), f).subscribe(r => this.m.set(r)); });
   }
   isVal() { return !['batches', 'exc'].includes(this.measure()); }
-  fmt(v: number) { return !v ? 'â€”' : this.isVal() ? fmtV(v) : Number(v).toLocaleString('en-IN'); }
+  fmt(v: number) { return !v ? '—' : this.isVal() ? fmtV(v) : Number(v).toLocaleString('en-IN'); }
   ragOf(share: number | null) { if (share === null || share === undefined) return ''; const p = share * 100; return p < this.rag.g ? 'g' : p < this.rag.y ? 'y' : p < this.rag.r ? 'r' : 'dr'; }
   cls(c: any) { return !c?.v || this.colorBy() !== 'rag' ? '' : 'rag-' + this.ragOf(c.share); }
   heat(c: any) { const max = this.max(); return this.colorBy() === 'heat' && c?.v ? (0.08 + 0.55 * Math.sqrt(c.v / max)).toFixed(2) : null; }
   max = computed(() => Math.max(1, ...(this.m()?.rows ?? []).flatMap((r: any) => Object.values(r.cells).map((c: any) => c.v))));
-  pct(v: number, base: number) { return base ? (Math.round(v / base * 1000) / 10).toFixed(1) + '%' : 'â€“'; }
+  pct(v: number, base: number) { return base ? (Math.round(v / base * 1000) / 10).toFixed(1) + '%' : '–'; }
   base(r: any, col: string) { const m = this.m(); return this.pctMode() === 'row' ? r.total.v : this.pctMode() === 'col' ? m.columnTotals[col].v : m.grand.v; }
   rows = computed(() => (this.m()?.rows ?? []).filter((r: any) => !this.hideEmpty() || r.total.v));
   groups = computed(() => {

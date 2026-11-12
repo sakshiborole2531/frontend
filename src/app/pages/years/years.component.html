@@ -1,4 +1,4 @@
-<div class="pagehead"><div><div class="eb"><span class="scopetag">{{ scope.path().join(' â€º ') }}</span>Analysis</div><h2>Year-wise Comparison</h2><div class="q">How has each type of inventory moved across financial years â€” value, stock status, risk inventory and consumables?</div></div></div>
+<div class="pagehead"><div><div class="eb"><span class="scopetag">{{ scope.path().join(' › ') }}</span>Analysis</div><h2>Year-wise Comparison</h2><div class="q">How has each type of inventory moved across financial years — value, stock status, risk inventory and consumables?</div></div></div>
 <div class="toolbar">
   <div class="fgroup"><label>Year value basis</label><div class="seg-tabs"><button [class.on]="basis() === 'close'" (click)="basis.set('close')">Year-end closing</button><button [class.on]="basis() === 'avg'" (click)="basis.set('avg')">Average of month-ends</button></div></div>
   <span class="spacer"></span>
@@ -8,24 +8,24 @@
   <div class="panel"><div class="empty">No history yet. A snapshot is captured automatically each month (daily job) and after every import. Load past years by importing a SAP extract as a <b>historical snapshot</b> in Import / Export.</div></div>
 } @else {
 <div class="grid2">
-  <div class="panel"><h2>Inventory value by financial year</h2><div class="desc">Stacked by inventory type Â· current year is year-to-date</div><div class="chartbox" style="height:280px">@if (fyChart(); as c) {<canvas [chart]="c"></canvas>}</div></div>
+  <div class="panel"><h2>Inventory value by financial year</h2><div class="desc">Stacked by inventory type · current year is year-to-date</div><div class="chartbox" style="height:280px">@if (fyChart(); as c) {<canvas [chart]="c"></canvas>}</div></div>
   <div class="panel"><h2>Monthly trend</h2><div class="desc">Month-end total value with risk inventory</div><div class="chartbox" style="height:280px">@if (trendChart(); as c) {<canvas [chart]="c"></canvas>}</div></div>
 </div>
 <div class="gap"></div>
-<div class="panel"><h2>Year-wise comparison by inventory type â€” {{ scope.title() }}</h2>
-  <div class="desc">â–²/â–¼ change vs previous financial year. Risk rows: green = favourable, red = unfavourable.</div>
+<div class="panel"><h2>Year-wise comparison by inventory type — {{ scope.title() }}</h2>
+  <div class="desc">▲/▼ change vs previous financial year. Risk rows: green = favourable, red = unfavourable.</div>
   <div class="tablewrap" style="max-height:none"><table class="ytbl"><thead><tr><th>Inventory type</th>
-    @for (y of years(); track y.fy) {<th class="num">FY {{ y.fy }}<div class="fysub">{{ y.partial ? 'YTD Â· ' : (basis() === 'avg' ? 'avg of ' + y.months + ' month-ends Â· ' : 'close Â· ') }}{{ fmtD(y.date) }}</div></th>}
+    @for (y of years(); track y.fy) {<th class="num">FY {{ y.fy }}<div class="fysub">{{ y.partial ? 'YTD · ' : (basis() === 'avg' ? 'avg of ' + y.months + ' month-ends · ' : 'close · ') }}{{ fmtD(y.date) }}</div></th>}
     <th class="num">Change vs previous FY</th></tr></thead><tbody>
     @for (ln of lines; track ln.l) {
       @if (ln.grp) {<tr class="grprow"><td [attr.colspan]="years().length + 2">{{ ln.grp }}</td></tr>}
       <tr [class.totrow]="ln.total"><td>{{ ln.l }}</td>@for (v of row(ln.get); track $index) {<td class="num">{{ v | inr }}</td>}
-        <td class="num">@if (delta(row(ln.get)); as dl) {<span class="dl {{ dcls(dl.d, ln.bad) }}">{{ dl.d > 0 ? 'â–²' : dl.d < 0 ? 'â–¼' : 'â€¢' }} {{ abs(dl.d) }}@if (dl.p !== null) {<small> {{ dl.p > 0 ? '+' : '' }}{{ dl.p.toFixed(1) }}%</small>}</span>} @else {â€“}</td></tr>
+        <td class="num">@if (delta(row(ln.get)); as dl) {<span class="dl {{ dcls(dl.d, ln.bad) }}">{{ dl.d > 0 ? '▲' : dl.d < 0 ? '▼' : '•' }} {{ abs(dl.d) }}@if (dl.p !== null) {<small> {{ dl.p > 0 ? '+' : '' }}{{ dl.p.toFixed(1) }}%</small>}</span>} @else {–}</td></tr>
     }
   </tbody></table></div></div>
 }
 <div class="panel"><h2>Snapshot history</h2><div class="desc">One snapshot per month; imported extracts take priority over automatic captures.</div>
   <div class="tablewrap short"><table><thead><tr><th>Month</th><th>As of</th><th>FY</th><th>Source</th><th class="num">Total value (this scope)</th><th class="num">Batches</th><th></th></tr></thead><tbody>
     @for (m of months().slice().reverse(); track m.period) {<tr><td><b>{{ m.period }}</b></td><td>{{ fmtD(m.date) }}</td><td>{{ m.fy }}</td><td><span class="tag {{ m.source === 'sample' ? 'mat' : m.source === 'import' ? 'ok' : 'info' }}">{{ m.source }}</span></td><td class="num">{{ m.v | inr }}</td><td class="num">{{ m.n }}</td>
-      <td>@if (auth.can('masters.edit')) {<button class="iconbtn" (click)="remove(m.period)">âœ•</button>}</td></tr>}
+      <td>@if (auth.can('masters.edit')) {<button class="iconbtn" (click)="remove(m.period)">✕</button>}</td></tr>}
     @empty {<tr><td colspan="7" class="empty">No snapshots</td></tr>}</tbody></table></div></div>

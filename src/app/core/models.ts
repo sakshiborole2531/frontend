@@ -2,7 +2,7 @@ export const MAT_TYPES = ['Raw Material', 'Intermediate', 'Semi-Finished Goods',
 export const DEPTS = ['Production', 'Engineering', 'QC', 'EHS', 'Other'] as const;
 export const STATUSES = ['Unrestricted', 'Quality', 'Blocked'] as const;
 export const STAGES = ['Prioritized', 'Owned', 'In Action', 'Closed'] as const;
-export const BUCKETS = ['0â€“30', '31â€“90', '91â€“180', '181â€“365', '>365'];
+export const BUCKETS = ['0–30', '31–90', '91–180', '181–365', '>365'];
 export const BUCKET_COLORS = ['#34b45a', '#2f7de1', '#f5b81c', '#f5843a', '#ef4f4f'];
 export const SHORT: Record<string, string> = { 'Raw Material': 'RM', 'Intermediate': 'INT', 'Semi-Finished Goods': 'SFG', 'Finished Goods': 'FG', 'Recovered Solvent': 'RS', 'Packing Material': 'PM', 'Consumable': 'CON' };
 export const CAT_COLORS: Record<string, string> = { 'Raw Material': '#3b5bdb', 'Intermediate': '#7c3aed', 'Semi-Finished Goods': '#d946ef', 'Finished Goods': '#f59e0b', 'Recovered Solvent': '#ef4444', 'Packing Material': '#16a34a', 'Consumable': '#0ea5a4' };
@@ -44,7 +44,7 @@ export interface Masters {
 
 export interface Filter { bu: string; plant: string; cat: string; status: string; dept: string; q: string; }
 
-/** Active master records for the sidebar â€” served by GET /api/masters/sidebar. */
+/** Active master records for the sidebar — served by GET /api/masters/sidebar. */
 export interface PlantSidebarItem { id: number; code: string | null; name: string; active: boolean; order: number; buCode: string; city?: string | null; }
 export interface BusinessUnitSidebarItem { id: string; code: string; name: string; active: boolean; order: number; alias?: string | null; plantCount: number; }
 export interface StorageLocationSidebarItem { id: number; code: string; name: string; active: boolean; order: number; plantName?: string | null; storageType?: string; }

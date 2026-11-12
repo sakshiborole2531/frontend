@@ -16,7 +16,7 @@ import { FilterBarComponent } from '../../shared/filter-bar.component';
 import { RecordDialog, openActionForm } from '../../shared/dialogs';
 import { UI } from '../../shared/ui';
 
-/** Multilevel dashboard: Organization â†’ Business Unit â†’ Unit, organized by the operating philosophy. */
+/** Multilevel dashboard: Organization → Business Unit → Unit, organized by the operating philosophy. */
 @Component({
   standalone: true, imports: [FormsModule, MatTableModule, MatSortModule, MatPaginatorModule, ChartDirective, FilterBarComponent, ...UI],
   templateUrl: './dashboard.component.html'
@@ -89,8 +89,8 @@ export class DashboardComponent {
     const d = this.d(); if (!d) return null;
     const vals: number[] = d.aging.map((a: any) => a.v); const div = Math.max(...vals, 1) >= 1e7 ? 1e7 : 1e5;
     return { type: 'bar', data: { labels: d.aging.map((a: any) => [a.bucket, 'days']), datasets: [{ data: vals.map(v => +(v / div).toFixed(1)), backgroundColor: BUCKET_COLORS, borderRadius: 5, maxBarThickness: 54 }] },
-      options: { maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => `â‚¹${c.raw} ${div === 1e7 ? 'Cr' : 'L'}` } } },
-        scales: { y: { beginAtZero: true, title: { display: true, text: div === 1e7 ? 'â‚¹ Crore' : 'â‚¹ Lakh' } }, x: { grid: { display: false } } },
+      options: { maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => `₹${c.raw} ${div === 1e7 ? 'Cr' : 'L'}` } } },
+        scales: { y: { beginAtZero: true, title: { display: true, text: div === 1e7 ? '₹ Crore' : '₹ Lakh' } }, x: { grid: { display: false } } },
         onClick: (_e, els) => { if (els.length) this.go('/inventory/aging', { bucket: d.aging[els[0].index].bucket }); } } };
   });
   fefoChart = computed<ChartConfiguration | null>(() => {
