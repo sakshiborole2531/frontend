@@ -71,14 +71,39 @@ export class ShellComponent {
     this.router.events.pipe(filter(e => e instanceof NavigationEnd)).subscribe(() => { this.url.set(this.router.url); document.body.classList.remove('sideopen'); });
     effect(() => { this.scope.version(); if (this.auth.can('view.actions')) this.api.actions().subscribe(a => this.overdue.set(a.filter(x => x.overdue).length)); });
     effect(() => document.body.classList.toggle('sidemini', this.mini()));
-    // first-level scope for users limited to one BU / unit
-    const me = this.auth.me();
-    if (me && !me.scopeAll) {
-      if (me.scopeBus.length === 1 && !me.scopeUnits.length) this.scope.goScope(me.scopeBus[0]);
-      else if (!me.scopeBus.length && me.scopeUnits.length === 1) setTimeout(() => {
-        const p = this.scope.activePlants().find(x => x.name === me.scopeUnits[0]); if (p) this.scope.goScope(p.buCode, p.name);
-      }, 600);
-    }
+    // Enforce scope authorization on login / refresh / change
+    effect(() => {
+      const bus = this.scope.bus();
+      const me = this.auth.me();
+      if (!me) return;
+      if (!this.scope.hasAllAccess()) {
+        const currentFilter = this.scope.filter();
+        if (bus.length === 0) {
+          // No BU access
+          if (currentFilter.bu !== 'None' || currentFilter.plant !== 'None') {
+            this.scope.set({ bu: 'None', plant: 'None' });
+          }
+        } else if (bus.length === 1) {
+          // Exactly one BU allowed
+          const targetBu = bus[0];
+          const allowedPlants = this.scope.unitsOf(targetBu);
+          if (allowedPlants.length === 1) {
+            if (currentFilter.bu !== targetBu || currentFilter.plant !== allowedPlants[0]) {
+              this.scope.goScope(targetBu, allowedPlants[0]);
+            }
+          } else {
+            if (currentFilter.bu !== targetBu) {
+              this.scope.goScope(targetBu, 'All');
+            }
+          }
+        } else {
+          // Multiple BUs allowed, ensure current BU is in allowed list
+          if (currentFilter.bu === 'All' || !bus.includes(currentFilter.bu)) {
+            this.scope.goScope(bus[0], 'All');
+          }
+        }
+      }
+    }, { allowSignalWrites: true });
   }
 
   visible(p?: string | string[]) { return !p || this.auth.can(p); }

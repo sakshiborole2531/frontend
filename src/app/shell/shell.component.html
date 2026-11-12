@@ -23,8 +23,10 @@
   <aside class="side">
     @if (auth.can('view.inventory')) {
       <div class="sidesec">Organization</div>
-      <button class="sitem orgnode" [class.on]="scope.level() === 'org' && onDash()" [class.inpath]="scope.level() === 'org' && !onDash()" (click)="goScope('All')" title="Entire organization">
-        <span class="ic"><ic n="building" [size]="16"/></span>{{ scope.settings()['companyShort'] ? 'Unichem' : 'Organization' }}<span class="lvl">ORG</span></button>
+      @if (scope.hasAllAccess()) {
+        <button class="sitem orgnode" [class.on]="scope.level() === 'org' && onDash()" [class.inpath]="scope.level() === 'org' && !onDash()" (click)="goScope('All')" title="Entire organization">
+          <span class="ic"><ic n="building" [size]="16"/></span>{{ scope.settings()['companyShort'] ? 'Unichem' : 'Organization' }}<span class="lvl">ORG</span></button>
+      }
       <div class="tree">
         @for (b of scope.bus(); track b; let i = $index) {
           <button class="tnode bu" [class.on]="scope.filter().bu === b && scope.filter().plant === 'All' && onDash()" [class.inpath]="scope.filter().bu === b" (click)="goScope(b)">

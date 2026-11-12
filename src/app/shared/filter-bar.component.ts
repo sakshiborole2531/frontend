@@ -11,8 +11,9 @@ import { Ic } from './ui';
   <div class="fpanel inline">
     <div class="frow">
       <div class="fsel"><span class="ic"><ic n="layers" [size]="16"/></span>
-        <select aria-label="Business unit" [ngModel]="f().bu" (ngModelChange)="scope.set({ bu: $event, plant: 'All' })">
-          <option value="All">Business Unit</option>@for (b of scope.bus(); track b) {<option [value]="b">{{ b }}</option>}</select></div>
+        <select aria-label="Business unit" [ngModel]="f().bu" (ngModelChange)="scope.set({ bu: $event, plant: 'All' })" [disabled]="scope.bus().length === 1">
+          @if (scope.hasAllAccess()) { <option value="All">Business Unit</option> }
+          @for (b of scope.bus(); track b) {<option [value]="b">{{ b }}</option>}</select></div>
       <div class="fsel"><span class="ic"><ic n="place" [size]="16"/></span>
         <select aria-label="Plant" [ngModel]="f().plant" (ngModelChange)="scope.set({ plant: $event })">
           <option value="All">Plant</option>@for (p of plants(); track p) {<option [value]="p">{{ p }}</option>}</select></div>
