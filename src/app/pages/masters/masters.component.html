@@ -46,7 +46,7 @@
         <span class="spacer" style="flex:1"></span>
         <button type="button" class="btn ghost small" (click)="selectSec('save')">Review</button>
         <button type="button" class="btn secondary small" (click)="discardAll()">Discard</button>
-        <button type="button" class="btn small" (click)="saveAllMasters()">
+        <button type="button" class="btn small" (click)="saveAllMasters()" [disabled]="hasMtypeDuplicates()">
           <ic n="check" [size]="15"/> Save all masters
         </button>
       </div>
@@ -68,6 +68,16 @@
         @let shownRows = filteredRows(def.id);
         <h2>{{ def.label }}</h2>
         <div class="desc" [innerHTML]="def.desc || ''"></div>
+
+        @if (def.id === 'mtypes' && hasMtypeDuplicates()) {
+          <div class="table-error-banner">
+            <ic n="alert" [size]="17"/>
+            <span>
+              Duplicate entry: <b>{{ duplicateMtypeSummaries().join(', ') }}</b> already exist{{ duplicateMtypeSummaries().length === 1 ? 's' : '' }}. Multiple rows with the same Material Type are allowed only if their Dashboard Category and Business Unit combinations are different.
+            </span>
+          </div>
+        }
+
         <div class="toolbar">
           <button type="button" class="btn small" (click)="addRow(def)">＋ Add row</button>
           @if (allRows.length > 12 || q()[def.id]) {
@@ -108,13 +118,16 @@
             </thead>
             <tbody>
               @for (r of shownRows; track r; let i = $index) {
-                <tr>
+                <tr [class.row-duplicate]="def.id === 'mtypes' && isMtypeDuplicateRow(r)">
                   <td class="hint">{{ i + 1 }}</td>
                   @for (c of def.cols; track c.k) {
                     <td>
                       @switch (c.type) {
                         @case ('select') {
-                          <select [(ngModel)]="r[c.k]" (ngModelChange)="onCellChange(def, r, i, c, $event)">
+                          <select
+                            [(ngModel)]="r[c.k]"
+                            (ngModelChange)="onCellChange(def, r, i, c, $event)"
+                            [class.cell-duplicate]="isDuplicateCell(def, r, c.k)">
                             @for (o of c.opts!(); track o) {
                               <option [value]="o">{{ o === '' ? '— all —' : o }}</option>
                             }
@@ -137,14 +150,26 @@
                             [type]="c.type === 'email' ? 'email' : 'text'"
                             [(ngModel)]="r[c.k]"
                             (ngModelChange)="onCellChange(def, r, i, c, $event)"
+                            [class.cell-duplicate]="isDuplicateCell(def, r, c.k)"
                             [placeholder]="c.req ? 'required' : ''">
+                          @if (def.id === 'mtypes' && c.k === 'sapCode' && isMtypeDuplicateRow(r)) {
+                            <div class="dup-error-badge">
+                              <ic n="alert" [size]="12"/> Duplicate: '{{ r[c.k] }}' with same Category &amp; BU
+                            </div>
+                          }
                         }
                       }
                     </td>
                   }
                   <td style="white-space:nowrap">
                     @if (def.url && !def.list && isRowDirty(r)) {
-                      <button type="button" class="btn small" style="padding:3px 8px;margin-right:4px" (click)="saveRow(def, r, i)" title="Save this row">Save</button>
+                      <button
+                        type="button"
+                        class="btn small"
+                        style="padding:3px 8px;margin-right:4px"
+                        (click)="saveRow(def, r, i)"
+                        [disabled]="def.id === 'mtypes' && isMtypeDuplicateRow(r)"
+                        title="Save this row">Save</button>
                     }
                     <button type="button" class="iconbtn" (click)="removeRow(def, r, i)" title="Delete row">✕</button>
                   </td>
@@ -446,7 +471,7 @@
               </div>
 
               <div class="actions" style="margin-top:16px;display:flex;gap:10px">
-                <button type="button" class="btn" (click)="saveAllMasters()">
+                <button type="button" class="btn" (click)="saveAllMasters()" [disabled]="hasMtypeDuplicates()">
                   <ic n="check" [size]="16"/> Save all masters
                 </button>
                 <button type="button" class="btn secondary" (click)="discardAll()">

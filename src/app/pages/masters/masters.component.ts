@@ -440,6 +440,75 @@ export class MastersComponent {
   contactRoleOpts = ['Plant Head', 'BU Head', 'Stores Head', 'QA / QC', 'Function Head', 'Finance', 'Other'];
   contactReceivesOpts = ['All', 'P1 only', 'New & escalations', 'Escalations only', 'Closures only'];
 
+  /**
+   * Tracks duplicate Material Type composite entries:
+   * (materialType/sapCode + dashboardCategory/category + businessUnit).
+   * Multiple rows with the same Material Type are allowed ONLY if their Dashboard Category
+   * and Business Unit combinations are different.
+   */
+  mtypeDuplicateRows = computed(() => {
+    const list = this.rows()['mtypes'] ?? [];
+    const counts = new Map<string, number>();
+    for (const r of list) {
+      const code = String(r.sapCode ?? '').trim().toUpperCase();
+      const cat = String(r.category ?? '').trim().toLowerCase();
+      const bu = String(r.businessUnit ?? '').trim().toLowerCase();
+      if (!code) continue;
+      const key = `${code}|${cat}|${bu}`;
+      counts.set(key, (counts.get(key) || 0) + 1);
+    }
+    const dupSet = new Set<any>();
+    for (const r of list) {
+      const code = String(r.sapCode ?? '').trim().toUpperCase();
+      const cat = String(r.category ?? '').trim().toLowerCase();
+      const bu = String(r.businessUnit ?? '').trim().toLowerCase();
+      if (!code) continue;
+      const key = `${code}|${cat}|${bu}`;
+      if ((counts.get(key) || 0) > 1) {
+        dupSet.add(r);
+      }
+    }
+    return dupSet;
+  });
+
+  hasMtypeDuplicates = computed(() => this.mtypeDuplicateRows().size > 0);
+
+  duplicateMtypeSummaries = computed<string[]>(() => {
+    const list = this.rows()['mtypes'] ?? [];
+    const counts = new Map<string, { code: string; cat: string; bu: string; count: number }>();
+    for (const r of list) {
+      const code = String(r.sapCode ?? '').trim().toUpperCase();
+      const cat = String(r.category ?? '').trim();
+      const bu = String(r.businessUnit ?? '').trim();
+      if (!code) continue;
+      const key = `${code}|${cat.toLowerCase()}|${bu.toLowerCase()}`;
+      const existing = counts.get(key);
+      if (existing) {
+        existing.count++;
+      } else {
+        counts.set(key, { code, cat, bu, count: 1 });
+      }
+    }
+    const summaries: string[] = [];
+    counts.forEach(({ code, cat, bu, count }) => {
+      if (count > 1) {
+        const buPart = bu ? ` + BU: ${bu}` : ' + BU: All';
+        summaries.push(`'${code}' (${cat}${buPart})`);
+      }
+    });
+    return summaries;
+  });
+
+  isMtypeDuplicateRow(row: any): boolean {
+    return this.mtypeDuplicateRows().has(row);
+  }
+
+  isDuplicateCell(def: MasterDef, row: any, colKey: string): boolean {
+    if (def.id !== 'mtypes') return false;
+    if (colKey !== 'sapCode' && colKey !== 'category' && colKey !== 'businessUnit') return false;
+    return this.isMtypeDuplicateRow(row);
+  }
+
   filteredRows(id: string): any[] {
     const q = (this.q()[id] || '').trim().toLowerCase();
     const all = this.rows()[id] ?? [];
@@ -547,6 +616,15 @@ export class MastersComponent {
     const missing = (def.cols ?? []).filter(c => c.req && !String(row[c.k] ?? '').trim()).map(c => c.l);
     if (missing.length) {
       this.toast.show(`Please fill required field(s): ${missing.join(', ')}`);
+      return;
+    }
+
+    if (def.id === 'mtypes' && this.isMtypeDuplicateRow(row)) {
+      const code = String(row.sapCode ?? '').trim();
+      const cat = String(row.category ?? '').trim();
+      const bu = String(row.businessUnit ?? '').trim();
+      const buPart = bu ? ` and Business Unit "${bu}"` : ' and Business Unit "— all —"';
+      this.toast.show(`Duplicate entry: Material Type "${code}" already exists with Dashboard Category "${cat}"${buPart}.`);
       return;
     }
 
@@ -1010,6 +1088,13 @@ export class MastersComponent {
 
   saveAllMasters() {
     if (!this.isDirty()) return;
+
+    // Check duplicate Material Type composite entries (Material Type + Category + BU)
+    if (this.hasMtypeDuplicates()) {
+      const dups = this.duplicateMtypeSummaries();
+      this.toast.show(`Cannot save masters: duplicate Material Type entry detected for ${dups.join(', ')}. Each combination of Material Type, Dashboard Category, and Business Unit must be unique.`);
+      return;
+    }
 
     // Default blank Business Unit description to its code if needed
     const busList = this.rows()['bus'] ?? [];
