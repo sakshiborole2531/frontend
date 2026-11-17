@@ -9,7 +9,7 @@ import { ChartConfiguration } from 'chart.js';
 import { ApiService } from '../../core/api.service';
 import { AuthService } from '../../core/auth.service';
 import { ScopeService } from '../../core/scope.service';
-import { BUCKET_COLORS, CalcItem, SHORT } from '../../core/models';
+import { BUCKET_COLORS, CalcItem, MAT_TYPES, SHORT } from '../../core/models';
 import { fmtV, invStatus, pct, realFlags } from '../../core/format';
 import { ChartDirective } from '../../shared/chart';
 import { FilterBarComponent } from '../../shared/filter-bar.component';
@@ -53,10 +53,61 @@ export class DashboardComponent {
   w(v: number, base: number) { return base ? v / base * 100 : 0; }
   maxOf(list: any[], k = 'v') { return Math.max(1, ...list.map(r => (r[k] ?? (r.u + r.q + r.b)) || 0)); }
 
+  selectedLocChild = computed(() => {
+    const loc = this.scope.filter().loc;
+    if (!loc || loc === 'All') return null;
+    const children = this.d()?.children;
+    if (!Array.isArray(children)) return null;
+    return children.find((c: any) => c.kind === 'loc' && c.key === loc) || null;
+  });
+
+  clearLocFilter() {
+    this.scope.set({ loc: 'All' });
+  }
+
+  locExpandedDetails(locKey: string) {
+    const locItems = this.items().filter(x => (x.storageLoc || 'Unassigned') === locKey);
+    const totalVal = locItems.reduce((acc, x) => acc + (x.value || 0), 0) || 1;
+    const cats = MAT_TYPES.map(cat => {
+      const match = locItems.filter(x => x.matType === cat);
+      const v = match.reduce((acc, x) => acc + (x.value || 0), 0);
+      return {
+        cat,
+        short: this.short[cat] || cat,
+        v,
+        n: match.length,
+        pct: (v / totalVal * 100).toFixed(1)
+      };
+    }).filter(c => c.n > 0);
+
+    const agedCount = locItems.filter(x => x.age !== null && x.age > this.t().agingDays).length;
+    const expCount = locItems.filter(x => x.rsl !== null && x.rsl <= this.t().expiryDays).length;
+    const blockedCount = locItems.filter(x => x.blockedQty > 0 || x.qualityQty > 0).length;
+    const materialsCount = new Set(locItems.map(x => x.code)).size;
+
+    return {
+      cats,
+      totalVal,
+      batchesCount: locItems.length,
+      materialsCount,
+      agedCount,
+      expCount,
+      blockedCount
+    };
+  }
+
   // ---- drill-down
   kid(k: any) {
-    if (k.kind === 'bu') this.scope.goScope(k.key);
-    else if (k.kind === 'unit') this.scope.goScope(this.scope.filter().bu, k.key);
+    if (k.kind === 'bu') {
+      this.scope.goScope(k.key);
+    } else if (k.kind === 'unit') {
+      this.scope.goScope(this.scope.filter().bu, k.key);
+    } else if (k.kind === 'loc') {
+      const currentLoc = this.scope.filter().loc || 'All';
+      // Toggle selection: if already selected, reset to 'All'; otherwise set to clicked storage location
+      const newLoc = currentLoc === k.key ? 'All' : k.key;
+      this.scope.set({ loc: newLoc });
+    }
   }
   up(i: number) { if (i === 0) this.scope.goScope('All'); else this.scope.goScope(this.scope.filter().bu); }
   go(link: string, q: Record<string, string> = {}) { this.router.navigate([link], { queryParams: q }); }

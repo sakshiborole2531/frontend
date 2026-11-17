@@ -54,7 +54,7 @@ export class ShellComponent {
     { label: 'Actions', icon: 'check', sec: 'Action & Reports', key: 'act', perm: 'view.actions', items: [
       { label: 'Assign Owner', link: '/actions/queue' }, { label: 'Open Actions', link: '/actions/open', cnt: () => this.overdue() || '', red: true },
       { label: 'Closed', link: '/actions/closed' }] },
-    { label: 'Reports (PDF)', icon: 'file', link: '/import', queryParams: { section: 'reports' }, perm: 'view.inventory' },
+    { label: 'Reports (PDF)', icon: 'file', link: '/reports', perm: 'view.inventory' },
     { label: 'Configuration', icon: 'gear', sec: 'Setup', key: 'cfg', items: [
       { label: 'Masters', link: '/masters', perm: 'masters.edit' },
       { label: 'Import / Export', link: '/import', perm: ['import.data', 'export.data'] },

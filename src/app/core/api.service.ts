@@ -1,6 +1,6 @@
 import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { Observable, catchError, map, of, switchMap, throwError } from 'rxjs';
+import { Observable, catchError, map, of, switchMap, throwError, timeout } from 'rxjs';
 import {
   Action,
   AutomaticImportConfig,
@@ -41,8 +41,11 @@ export class ApiService {
   deleteItem(id: number) { return this.delete<void>('/inventory/' + id); }
   dataIssues() { return this.get<{ id: number; code: string; batch: string; plant: string; issue: string }[]>('/inventory/data-issues'); }
   importFile(file: File, format: string, mode: string, asOf: string | null, preview: boolean) {
-    const fd = new FormData(); fd.append('file', file);
-    return this.http.post<any>(this.base + '/inventory/import', fd, { params: this.params({ format, mode, asOf, preview }) });
+    const fd = new FormData();
+    fd.append('file', file, file.name);
+    return this.http.post<any>(this.base + '/inventory/import', fd, {
+      params: this.params({ format, mode, asOf, preview })
+    }).pipe(timeout(600_000));
   }
 
   // actions

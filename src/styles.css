@@ -15,3 +15,122 @@ app-root { display: block; }
 .err { color: var(--red); font-size: 11.5px; font-weight: 600; margin-top: 2px; }
 input.ng-invalid.ng-touched, select.ng-invalid.ng-touched, textarea.ng-invalid.ng-touched { border-color: var(--red) !important; }
 .loading { padding: 40px; text-align: center; color: var(--mute); }
+
+
+/* Storage Location Card Expand Styles */
+.kidexpand-icon {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  color: var(--kc);
+  background: color-mix(in srgb, var(--kc) 10%, transparent);
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+.kid:hover .kidexpand-icon {
+  background: color-mix(in srgb, var(--kc) 20%, transparent);
+}
+.kid.expanded {
+  grid-column: 1 / -1 !important;
+  border-color: var(--kc) !important;
+  box-shadow: 0 4px 18px color-mix(in srgb, var(--kc) 18%, transparent) !important;
+  cursor: default;
+}
+.kid-expand-body {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--border);
+  animation: fadeInDown 0.22s ease-in-out;
+  cursor: default;
+}
+@keyframes fadeInDown {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.kid-expand-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 10px;
+}
+.kid-expand-header b {
+  font-size: 13.5px;
+  color: var(--navy);
+}
+.kid-expand-summary {
+  font-size: 11px;
+  color: var(--mute);
+  font-weight: 600;
+}
+.kid-cat-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.kid-cat-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  padding: 4px 9px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-size: 11px;
+}
+.kid-cat-chip:hover {
+  background: var(--orange-bg);
+  border-color: var(--orange);
+  transform: translateY(-1px);
+}
+.kcc-tag {
+  font-weight: 700;
+  color: var(--kc);
+}
+.kcc-val {
+  font-weight: 700;
+  color: var(--navy);
+  font-variant-numeric: tabular-nums;
+}
+.kcc-pct {
+  color: var(--mute);
+  font-size: 10.5px;
+}
+.kid-expand-kpis {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 8px 12px;
+  background: var(--surface2);
+  border-radius: 8px;
+  font-size: 11.5px;
+  margin-bottom: 12px;
+}
+.kid-expand-kpis span {
+  display: inline-flex;
+  gap: 5px;
+  align-items: center;
+}
+.kid-expand-kpis em {
+  font-style: normal;
+  color: var(--mute);
+}
+.kid-expand-kpis b {
+  color: var(--navy);
+}
+.kid-expand-kpis span.warn b {
+  color: #ea6a12;
+}
+.kid-expand-kpis span.bad b {
+  color: #dc2626;
+}
+.kid-expand-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}

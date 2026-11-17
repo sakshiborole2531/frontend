@@ -78,6 +78,15 @@
           </div>
         }
 
+        @if (def.id === 'numseries' && hasNumSeriesDuplicates()) {
+          <div class="table-error-banner">
+            <ic n="alert" [size]="17"/>
+            <span>
+              An active mapping already exists for this Number Series and Business Unit (<b>{{ duplicateNumSeriesSummaries().join(', ') }}</b>).
+            </span>
+          </div>
+        }
+
         <div class="toolbar">
           <button type="button" class="btn small" (click)="addRow(def)">＋ Add row</button>
           @if (allRows.length > 12 || q()[def.id]) {
@@ -118,7 +127,7 @@
             </thead>
             <tbody>
               @for (r of shownRows; track r; let i = $index) {
-                <tr [class.row-duplicate]="def.id === 'mtypes' && isMtypeDuplicateRow(r)">
+                <tr [class.row-duplicate]="(def.id === 'mtypes' && isMtypeDuplicateRow(r)) || (def.id === 'numseries' && isNumSeriesDuplicateRow(r))">
                   <td class="hint">{{ i + 1 }}</td>
                   @for (c of def.cols; track c.k) {
                     <td>
@@ -155,6 +164,11 @@
                           @if (def.id === 'mtypes' && c.k === 'sapCode' && isMtypeDuplicateRow(r)) {
                             <div class="dup-error-badge">
                               <ic n="alert" [size]="12"/> Duplicate: '{{ r[c.k] }}' with same Category &amp; BU
+                            </div>
+                          }
+                          @if (def.id === 'numseries' && c.k === 'seriesPattern' && isNumSeriesDuplicateRow(r)) {
+                            <div class="dup-error-badge">
+                              <ic n="alert" [size]="12"/> An active mapping already exists for this Number Series and Business Unit.
                             </div>
                           }
                         }

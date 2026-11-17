@@ -1,0 +1,231 @@
+<div class="pagehead">
+  <div>
+    <div class="eb">Reports</div>
+    <h2>PDF Reports</h2>
+    <div class="q">Business Unit-wise and Unit-wise inventory reports — choose scope, preview, download as PDF</div>
+  </div>
+</div>
+
+<div class="grid2">
+  <!-- Report Type Card -->
+  <div class="panel">
+    <h2><ic n="file" [size]="18"/> Report type</h2>
+    <div class="desc">PDF, A4 landscape, with company header, page numbers and generation stamp.</div>
+    <div class="radios">
+      @for (t of reportTypes; track t.id) {
+        <label [class.on]="repType() === t.id" (click)="setReportType(t.id)">
+          <input type="radio" name="repType" [value]="t.id" [checked]="repType() === t.id" (change)="setReportType(t.id)">
+          <div>
+            <b>{{ t.title }}</b>
+            <span>{{ t.desc }}</span>
+          </div>
+        </label>
+      }
+    </div>
+  </div>
+
+  <!-- Options & Scope Card -->
+  <div class="panel">
+    <h2><ic n="sliders" [size]="18"/> Options</h2>
+    <div class="desc">Choose scope and content. The preview below updates instantly.</div>
+    <div class="formgrid" style="grid-template-columns: 1fr 1fr">
+      <div class="fgroup">
+        <label>Business unit</label>
+        <select [ngModel]="selectedBu()" (ngModelChange)="onBuChange($event)">
+          <option value="All">All business units</option>
+          @for (b of availableBus(); track b) {
+            <option [value]="b">{{ b }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="fgroup">
+        <label>Data scope</label>
+        <select [ngModel]="dataScope()" (ngModelChange)="dataScope.set($event)">
+          <option value="all">All inventory</option>
+          <option value="filtered">Apply current dashboard filters</option>
+        </select>
+      </div>
+
+      <div class="fgroup">
+        <label>Rows per list (expiry, aged, actions)</label>
+        <select [ngModel]="topN()" (ngModelChange)="topN.set(+$event)">
+          <option [value]="10">10</option>
+          <option [value]="20">20</option>
+          <option [value]="50">50</option>
+          <option [value]="100">100</option>
+        </select>
+      </div>
+
+      <div class="fgroup">
+        <label>Prepared by</label>
+        <input type="text" [ngModel]="preparedBy()" (ngModelChange)="preparedBy.set($event)">
+      </div>
+
+      <!-- Unit switches -->
+      <div class="fgroup full">
+        <label>Units (plants) — none ticked = all units of the selected BU</label>
+        <div class="xgrid" style="grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 8px">
+          @for (u of availableUnits(); track u) {
+            <label class="switch" style="font-weight: 600">
+              <input type="checkbox" [checked]="isUnitSelected(u)" (change)="toggleUnit(u)">
+              <span class="tr"></span>{{ u }}
+            </label>
+          }
+          @empty {
+            <span class="hint">No plants in master for this BU</span>
+          }
+        </div>
+      </div>
+
+      <!-- Section toggles -->
+      <div class="fgroup full">
+        <label>Sections</label>
+        <div class="xgrid" style="grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 6px">
+          @for (s of sectionsList; track s.id) {
+            <label class="switch" style="font-weight: 600">
+              <input type="checkbox" [checked]="sections()[s.id]" (change)="toggleSection(s.id)">
+              <span class="tr"></span>{{ s.label }}
+            </label>
+          }
+        </div>
+      </div>
+    </div>
+
+    <div class="toolbar" style="margin-top: 14px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap">
+      <button class="btn primary" (click)="downloadPdf()" [disabled]="generatingPdf()">
+        <ic n="download" [size]="16"/>
+        {{ generatingPdf() ? 'Generating PDF...' : 'Download PDF report' }}
+      </button>
+      <button class="btn secondary" (click)="resetOptions()">Reset options</button>
+      <span class="hint">{{ filteredItems().length }} batches · {{ previewBus().length }} BU · {{ activeUnitsList().length }} units · {{ totalValDisplay() }}</span>
+    </div>
+  </div>
+</div>
+
+<div class="gap" style="height: 18px"></div>
+
+<!-- Live Preview 1: Business Unit-wise summary -->
+@if (repType() !== 'unit') {
+  <div class="panel">
+    <h2>Preview — Business Unit-wise summary</h2>
+    <div class="desc">Values in ₹ · aged &gt;{{ t().agingDays }}d · expiry within {{ t().expiryDays }}d (not yet expired)</div>
+    <div class="tablewrap" style="max-height: none">
+      <table>
+        <thead>
+          <tr>
+            <th>BU</th>
+            <th>Description</th>
+            <th class="num">Units</th>
+            <th class="num">Batches</th>
+            <th class="num">Total value</th>
+            <th class="num">Unrestricted</th>
+            <th class="num">Quality</th>
+            <th class="num">Blocked</th>
+            <th class="num">Aged</th>
+            <th class="num">Expiry ≤{{ t().expiryDays }}d</th>
+            <th class="num">Expired</th>
+            <th class="num">Consumables</th>
+            <th class="num">Exceptions</th>
+            <th class="num">Open / overdue actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of buSummaryRows(); track row.bu) {
+            <tr>
+              <td><b>{{ row.bu }}</b></td>
+              <td>{{ row.desc }}</td>
+              <td class="num">{{ row.unitsCount }}</td>
+              <td class="num">{{ row.agg.n }}</td>
+              <td class="num"><b>{{ row.agg.v | inr }}</b></td>
+              <td class="num">{{ row.agg.u | inr }}</td>
+              <td class="num">{{ row.agg.q | inr }}</td>
+              <td class="num" style="color: var(--red)">{{ row.agg.b | inr }}</td>
+              <td class="num">{{ row.agg.aged | inr }}</td>
+              <td class="num">{{ row.agg.exp | inr }}</td>
+              <td class="num">{{ row.agg.expd | inr }}</td>
+              <td class="num">{{ row.agg.cons | inr }}</td>
+              <td class="num">{{ row.agg.exc }}</td>
+              <td class="num">{{ row.ac.open }} / <span style="color: var(--red)">{{ row.ac.od }}</span></td>
+            </tr>
+          }
+          <tr class="totrow">
+            <td><b>Total</b></td>
+            <td></td>
+            <td class="num">{{ totalSummary().unitsCount }}</td>
+            <td class="num">{{ totalSummary().agg.n }}</td>
+            <td class="num"><b>{{ totalSummary().agg.v | inr }}</b></td>
+            <td class="num">{{ totalSummary().agg.u | inr }}</td>
+            <td class="num">{{ totalSummary().agg.q | inr }}</td>
+            <td class="num">{{ totalSummary().agg.b | inr }}</td>
+            <td class="num">{{ totalSummary().agg.aged | inr }}</td>
+            <td class="num">{{ totalSummary().agg.exp | inr }}</td>
+            <td class="num">{{ totalSummary().agg.expd | inr }}</td>
+            <td class="num">{{ totalSummary().agg.cons | inr }}</td>
+            <td class="num">{{ totalSummary().agg.exc }}</td>
+            <td class="num">{{ totalSummary().ac.open }} / <span style="color: var(--red)">{{ totalSummary().ac.od }}</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+}
+
+<div class="gap" style="height: 18px"></div>
+
+<!-- Live Preview 2: Unit-wise summary -->
+@if (repType() !== 'bu') {
+  <div class="panel">
+    <h2>Preview — Unit-wise summary</h2>
+    <div class="desc">Grouped by business unit with subtotals</div>
+    <div class="tablewrap" style="max-height: none">
+      <table>
+        <thead>
+          <tr>
+            <th>BU</th>
+            <th>Unit</th>
+            <th>SAP code</th>
+            <th class="num">Batches</th>
+            <th class="num">Total value</th>
+            <th class="num">Unrestricted</th>
+            <th class="num">Quality</th>
+            <th class="num">Blocked</th>
+            <th class="num">Aged</th>
+            <th class="num">Expiry ≤{{ t().expiryDays }}d</th>
+            <th class="num">Consumables</th>
+            <th class="num">Exceptions</th>
+            <th class="num">Open / overdue</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (r of unitSummaryRows(); track $index) {
+            <tr [class.totrow]="r.kind !== 'unit'">
+              <td>{{ r.bu }}</td>
+              <td>
+                @if (r.kind === 'unit') {
+                  {{ r.unit }}
+                } @else {
+                  <b>{{ r.unit }}</b>
+                }
+              </td>
+              <td>{{ r.sap || '' }}</td>
+              <td class="num">{{ r.agg.n }}</td>
+              <td class="num"><b>{{ r.agg.v | inr }}</b></td>
+              <td class="num">{{ r.agg.u | inr }}</td>
+              <td class="num">{{ r.agg.q | inr }}</td>
+              <td class="num" [style.color]="r.agg.b > 0 ? 'var(--red)' : ''">{{ r.agg.b | inr }}</td>
+              <td class="num">{{ r.agg.aged | inr }}</td>
+              <td class="num">{{ r.agg.exp | inr }}</td>
+              <td class="num">{{ r.agg.cons | inr }}</td>
+              <td class="num">{{ r.agg.exc }}</td>
+              <td class="num">{{ r.ac.open }} / <span [style.color]="r.ac.od > 0 ? 'var(--red)' : ''">{{ r.ac.od }}</span></td>
+            </tr>
+          }
+          @empty {
+            <tr><td colspan="13" class="empty">No data for this selection</td></tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+}

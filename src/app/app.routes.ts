@@ -14,6 +14,7 @@ export const routes: Routes = [
       { path: 'matrix', data: { perm: 'view.inventory' }, loadComponent: () => import('./pages/matrix/matrix.component').then(m => m.MatrixComponent) },
       { path: 'years', data: { perm: 'view.years' }, loadComponent: () => import('./pages/years/years.component').then(m => m.YearsComponent) },
       { path: 'actions/:view', data: { perm: 'view.actions' }, loadComponent: () => import('./pages/actions/actions.component').then(m => m.ActionsComponent) },
+      { path: 'reports', data: { perm: 'view.inventory' }, loadComponent: () => import('./pages/reports/reports.component').then(m => m.ReportsComponent) },
       { path: 'import', data: { perm: ['import.data', 'export.data'] }, loadComponent: () => import('./pages/import/import.component').then(m => m.ImportComponent) },
       { path: 'data', data: { perm: ['data.edit', 'data.approve'] }, loadComponent: () => import('./pages/data/data.component').then(m => m.DataComponent) },
       { path: 'masters', data: { perm: 'masters.edit' }, loadComponent: () => import('./pages/masters/masters.component').then(m => m.MastersComponent) },

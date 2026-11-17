@@ -43,9 +43,9 @@ export class FilterBarComponent {
   typed(v: string) { this.q.set(v); clearTimeout(this.t); this.t = setTimeout(() => this.apply(), 350); }
   apply() { this.scope.set({ q: this.q() }); }
   active() {
-    const f = this.f(); const L: Record<string, string> = { cat: 'Category', status: 'Stock Status', dept: 'Department', q: 'Search' };
+    const f = this.f(); const L: Record<string, string> = { loc: 'Storage Location', cat: 'Category', status: 'Stock Status', dept: 'Department', q: 'Search' };
     return Object.keys(L).filter(k => (f as any)[k] && (f as any)[k] !== 'All').map(k => ({ k, l: L[k], v: (f as any)[k] }));
   }
   clear(k: string) { this.scope.set({ [k]: k === 'q' ? '' : 'All' } as any); if (k === 'q') this.q.set(''); }
-  clearAll() { this.scope.set({ cat: 'All', status: 'All', dept: 'All', q: '' }); this.q.set(''); }
+  clearAll() { this.scope.set({ loc: 'All', cat: 'All', status: 'All', dept: 'All', q: '' }); this.q.set(''); }
 }

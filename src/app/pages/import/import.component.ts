@@ -2,6 +2,7 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { ApiService } from '../../core/api.service';
 import { AuthService } from '../../core/auth.service';
 import { errMsg } from '../../core/auth.interceptor';
@@ -51,6 +52,7 @@ const DEFAULT_AUTO_STATUS: AutomaticImportStatus = {
   imports: [
     FormsModule,
     MatProgressBarModule,
+    MatProgressSpinnerModule,
     AutomaticImportCardComponent,
     AutomaticImportHistoryComponent,
     ...UI
@@ -63,6 +65,8 @@ export class ImportComponent {
   file = signal<File | null>(null);
   res = signal<any>(null);
   busy = signal(false); over = signal(false);
+  busyPhase = signal<'uploading' | 'processing' | 'saving' | ''>('');
+  uploadFileName = signal<string>('');
   rowFilter = signal<'all' | 'Warning' | 'Error'>('all');
   sync = signal<any[]>([]);
   short = SHORT; fmtDT = fmtDT;
@@ -422,30 +426,80 @@ export class ImportComponent {
     });
   }
 
-  pick(ev: Event) { const f = (ev.target as HTMLInputElement).files?.[0]; if (f) this.preview(f); }
-  drop(ev: DragEvent) { ev.preventDefault(); this.over.set(false); const f = ev.dataTransfer?.files[0]; if (f) this.preview(f); }
+  pick(ev: Event) {
+    if (this.busy()) return;
+    const f = (ev.target as HTMLInputElement).files?.[0];
+    (ev.target as HTMLInputElement).value = '';
+    if (f) this.preview(f);
+  }
+
+  drop(ev: DragEvent) {
+    ev.preventDefault();
+    this.over.set(false);
+    if (this.busy()) return;
+    const f = ev.dataTransfer?.files[0];
+    if (f) this.preview(f);
+  }
+
   preview(f: File) {
+    if (this.busy()) return;
     if (this.mode === 'history' && !this.asOf) { this.toast.show("Enter the 'As of' date for the historical snapshot"); return; }
     if (!/\.(xlsx|xls|xlsm|csv|txt)$/i.test(f.name)) { this.toast.show('Choose an Excel (.xlsx) or CSV file'); return; }
-    this.file.set(f); this.busy.set(true); this.res.set(null);
-    this.api.importFile(f, this.format, this.mode, this.asOf || null, true).subscribe({
-      next: r => { this.res.set(r); this.busy.set(false); }, error: e => { this.busy.set(false); this.toast.show(errMsg(e)); }
-    });
-  }
-  confirm() {
-    const f = this.file(); if (!f) return;
-    if (this.mode === 'replace' && !confirm('Replace all current inventory in your data scope with this file?')) return;
+
+    this.file.set(f);
+    this.uploadFileName.set(f.name);
     this.busy.set(true);
-    this.api.importFile(f, this.format, this.mode, this.asOf || null, false).subscribe({
-      next: r => {
-        this.busy.set(false); this.res.set(null); this.file.set(null);
-        this.toast.show(`Import complete — ${r.added} added, ${r.updated} updated`);
-        this.scope.load(); this.scope.refresh();
-        this.api.get<any[]>('/masters/sync-log').subscribe(s => this.sync.set(s));
-        this.loadAutomaticImportHistory();
-      },
-      error: e => { this.busy.set(false); this.toast.show(errMsg(e)); }
-    });
+    this.busyPhase.set('processing');
+    this.res.set(null);
+
+    // Yield back to the browser so the loading spinner/progress bar renders immediately
+    setTimeout(() => {
+      this.api.importFile(f, this.format, this.mode, this.asOf || null, true).subscribe({
+        next: r => {
+          this.res.set(r);
+          this.busy.set(false);
+          this.busyPhase.set('');
+          this.toast.show(`File validated: ${r.rowsRead} rows read (${r.ready} ready to import)`);
+        },
+        error: e => {
+          this.busy.set(false);
+          this.busyPhase.set('');
+          this.toast.show(errMsg(e));
+        }
+      });
+    }, 50);
+  }
+
+  confirm() {
+    if (this.busy()) return;
+    const f = this.file();
+    if (!f) return;
+    if (this.mode === 'replace' && !confirm('Replace all current inventory in your data scope with this file?')) return;
+
+    this.busy.set(true);
+    this.busyPhase.set('saving');
+
+    setTimeout(() => {
+      this.api.importFile(f, this.format, this.mode, this.asOf || null, false).subscribe({
+        next: r => {
+          this.busy.set(false);
+          this.busyPhase.set('');
+          this.res.set(null);
+          this.file.set(null);
+          this.uploadFileName.set('');
+          this.toast.show(`Import complete — ${r.added} added, ${r.updated} updated`);
+          this.scope.load();
+          this.scope.refresh();
+          this.api.get<any[]>('/masters/sync-log').subscribe(s => this.sync.set(s));
+          this.loadAutomaticImportHistory();
+        },
+        error: e => {
+          this.busy.set(false);
+          this.busyPhase.set('');
+          this.toast.show(errMsg(e));
+        }
+      });
+    }, 50);
   }
   rows() { const r = this.res()?.rows ?? []; return this.rowFilter() === 'all' ? r : r.filter((x: any) => this.rowFilter() === 'Error' ? x.status === 'Error' || x.status === 'Excluded' : x.status === 'Warning'); }
   dl(url: string, name: string) { this.api.download(url, this.scope.filter(), name).subscribe({ error: e => this.toast.show(errMsg(e)) }); }

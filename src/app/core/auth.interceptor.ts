@@ -15,5 +15,8 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 
 /** User-facing message from an RFC 7807 problem response. */
 export function errMsg(e: any): string {
-  return e?.error?.detail || e?.error?.message || (e?.status === 0 ? 'Cannot reach the server' : e?.message) || 'Something went wrong';
+  if (e?.name === 'TimeoutError') {
+    return 'The server took too long to process the file. For very large files, processing may still be continuing in the background, or please check server logs.';
+  }
+  return e?.error?.detail || e?.error?.message || (e?.status === 0 ? 'Cannot reach the server or connection timed out' : e?.message) || 'Something went wrong';
 }

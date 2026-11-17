@@ -32,12 +32,12 @@
   @if (auth.can('import.data')) {
   <div class="panel"><h2>Import inventory</h2><div class="desc">Excel (.xlsx) or CSV. Nothing is saved until you confirm the preview.</div>
     <div class="formgrid" style="grid-template-columns:1fr">
-      <div class="fgroup"><label>File format</label><select [(ngModel)]="format"><option value="AUTO">Detect automatically</option><option value="SAPSTOCK">SAP stock report — Unichem layout</option><option value="APP">Inventory template (this app)</option></select></div>
+      <div class="fgroup"><label>File format</label><select [(ngModel)]="format" [disabled]="busy()"><option value="AUTO">Detect automatically</option><option value="SAPSTOCK">SAP stock report — Unichem layout</option><option value="APP">Inventory template (this app)</option></select></div>
       <div class="radios">
-        <label><input type="radio" name="m" value="upsert" [(ngModel)]="mode"><div><b>Update existing &amp; add new</b><span>Matches on plant + material code + batch. Recommended for refreshes.</span></div></label>
-        <label><input type="radio" name="m" value="add" [(ngModel)]="mode"><div><b>Add only</b><span>Adds rows whose plant + code + batch does not exist yet.</span></div></label>
-        <label><input type="radio" name="m" value="history" [(ngModel)]="mode"><div><b>Historical snapshot (year-wise)</b><span>Use a past SAP extract to build that month's history. Current inventory is not changed. As of: <input type="date" [(ngModel)]="asOf" style="padding:3px 6px"></span></div></label>
-        <label><input type="radio" name="m" value="replace" [(ngModel)]="mode"><div><b>Replace all inventory (in your scope)</b><span>Clears current records first; actions re-link by plant + code + batch.</span></div></label>
+        <label><input type="radio" name="m" value="upsert" [(ngModel)]="mode" [disabled]="busy()"><div><b>Update existing &amp; add new</b><span>Matches on plant + material code + batch. Recommended for refreshes.</span></div></label>
+        <label><input type="radio" name="m" value="add" [(ngModel)]="mode" [disabled]="busy()"><div><b>Add only</b><span>Adds rows whose plant + code + batch does not exist yet.</span></div></label>
+        <label><input type="radio" name="m" value="history" [(ngModel)]="mode" [disabled]="busy()"><div><b>Historical snapshot (year-wise)</b><span>Use a past SAP extract to build that month's history. Current inventory is not changed. As of: <input type="date" [(ngModel)]="asOf" [disabled]="busy()" style="padding:3px 6px"></span></div></label>
+        <label><input type="radio" name="m" value="replace" [(ngModel)]="mode" [disabled]="busy()"><div><b>Replace all inventory (in your scope)</b><span>Clears current records first; actions re-link by plant + code + batch.</span></div></label>
       </div>
 
       <!-- Automatic Daily Import section immediately below "Replace all inventory (in your scope)" -->
@@ -68,10 +68,28 @@
           (clearError)="autoErrorMessage.set('')"/>
       </div>
 
-      <div class="drop" [class.over]="over()" (click)="fi.click()" (dragover)="$event.preventDefault(); over.set(true)" (dragleave)="over.set(false)" (drop)="drop($event)">
-        <b>Click to choose a file, or drop it here</b>.xlsx, .xls or .csv (SAP export or template)</div>
+      <div class="drop" [class.over]="over()" [class.busy-drop]="busy()" (click)="!busy() && fi.click()" (dragover)="$event.preventDefault(); !busy() && over.set(true)" (dragleave)="over.set(false)" (drop)="drop($event)">
+        @if (busy()) {
+          <div class="drop-loading-overlay">
+            <mat-progress-spinner mode="indeterminate" [diameter]="38" [strokeWidth]="3.5"></mat-progress-spinner>
+            <div class="drop-loading-text">
+              <b>{{ busyPhase() === 'saving' ? 'Importing inventory records…' : 'Reading and validating file…' }}</b>
+              <span>{{ uploadFileName() ? uploadFileName() : 'Processing file data' }} — please wait, do not close this window</span>
+            </div>
+            <mat-progress-bar mode="indeterminate" style="max-width:320px;margin-top:8px;border-radius:4px"></mat-progress-bar>
+          </div>
+        } @else {
+          <b>Click to choose a file, or drop it here</b>
+          <span>.xlsx, .xls or .csv (SAP export or template)</span>
+        }
+      </div>
       <input #fi type="file" accept=".xlsx,.xls,.xlsm,.csv,.txt" hidden (change)="pick($event)">
-      @if (busy()) { <mat-progress-bar mode="indeterminate"/> }
+      @if (busy()) {
+        <div style="margin-top:6px;display:flex;align-items:center;gap:8px;font-size:12px;color:var(--orange)">
+          <ic n="clock" [size]="14"/>
+          <span>Request in progress — upload controls are locked until processing completes.</span>
+        </div>
+      }
     </div></div>
   }
 </div>
@@ -85,8 +103,23 @@
     <div class="card t-red"><div class="label">Skipped</div><div class="value red">{{ r.skipped }}</div><div class="sub">excluded SAP types or errors</div></div>
     <div class="card"><div class="label">Value to import</div><div class="value">{{ r.value | inr }}</div></div>
   </div>
-  <div class="toolbar"><button class="btn green" (click)="confirm()" [disabled]="!r.ready || busy()">Confirm import of {{ r.ready }} records</button><button class="btn secondary" (click)="res.set(null)">Cancel</button>
-    <span class="spacer"></span><div class="seg-tabs"><button [class.on]="rowFilter() === 'all'" (click)="rowFilter.set('all')">All</button><button [class.on]="rowFilter() === 'Warning'" (click)="rowFilter.set('Warning')">Warnings</button><button [class.on]="rowFilter() === 'Error'" (click)="rowFilter.set('Error')">Errors</button></div></div>
+  <div class="toolbar">
+    <button class="btn green" (click)="confirm()" [disabled]="!r.ready || busy()">
+      @if (busy() && busyPhase() === 'saving') {
+        <mat-progress-spinner mode="indeterminate" [diameter]="16" [strokeWidth]="2" style="display:inline-block;vertical-align:middle;margin-right:6px"></mat-progress-spinner>
+        Importing {{ r.ready }} records…
+      } @else {
+        Confirm import of {{ r.ready }} records
+      }
+    </button>
+    <button class="btn secondary" (click)="res.set(null)" [disabled]="busy()">Cancel</button>
+    <span class="spacer"></span>
+    <div class="seg-tabs">
+      <button [class.on]="rowFilter() === 'all'" (click)="rowFilter.set('all')">All</button>
+      <button [class.on]="rowFilter() === 'Warning'" (click)="rowFilter.set('Warning')">Warnings</button>
+      <button [class.on]="rowFilter() === 'Error'" (click)="rowFilter.set('Error')">Errors</button>
+    </div>
+  </div>
   <div class="tablewrap"><table><thead><tr><th>Row</th><th>Status</th><th>Plant</th><th>Category</th><th>Code</th><th>Description</th><th>Batch</th><th class="num">U / Q / B</th><th class="num">Unit cost</th><th>GR date</th><th>SLED/BBD</th><th>Issues</th></tr></thead><tbody>
     @for (x of rows(); track x.row) { <tr><td>{{ x.row }}</td><td><span class="tag {{ x.status === 'OK' ? 'ok' : x.status === 'Warning' ? 'warn' : x.status === 'Excluded' ? 'mat' : 'bad' }}">{{ x.status }}</span></td>
       <td>{{ x.record.plant }}</td><td>{{ short[x.record.matType] }}{{ x.record.dept ? ' · ' + x.record.dept : '' }}</td><td>{{ x.record.code }}</td><td>{{ x.record.name }}</td><td>{{ x.record.batch || '–' }}</td>

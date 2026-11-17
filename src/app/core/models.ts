@@ -33,16 +33,17 @@ export interface Thresholds { expiryDays: number; agingDays: number; longLyingDa
 
 export interface Plant { id?: number; sapCode?: string | null; name: string; buCode: string; city?: string; active: boolean; sortOrder: number; }
 export interface BusinessUnit { code: string; name: string; alias?: string; active?: boolean; sortOrder?: number; }
-export interface StorageLocation { id?: number; plantName?: string | null; code: string; name: string; storageType: string; }
-export interface MaterialTypeMap { sapCode: string; description?: string; numberSeries?: string; category: string; businessUnit?: string | null; department?: string | null; }
-export interface MaterialGroupMap { sapCode: string; description?: string; category?: string | null; department?: string | null; subCategory?: string; }
+export interface StorageLocation { id?: number; plantName?: string | null; code: string; name: string; storageType: string; active?: boolean; }
+export interface MaterialTypeMap { id?: number; sapCode: string; description?: string; numberSeries?: string; category: string; businessUnit?: string | null; department?: string | null; active?: boolean; }
+export interface NumberSeriesBuMap { id?: number; seriesPattern: string; businessUnit: string; category: string; department?: string | null; description?: string | null; active: boolean; sortOrder?: number; }
+export interface MaterialGroupMap { sapCode: string; description?: string; category?: string | null; department?: string | null; subCategory?: string; active?: boolean; }
 export interface Person { id?: number; name: string; functionName?: string; email?: string; }
 export interface Masters {
-  businessUnits: BusinessUnit[]; plants: Plant[]; storageLocations: StorageLocation[]; materialTypes: MaterialTypeMap[]; materialGroups: MaterialGroupMap[];
+  businessUnits: BusinessUnit[]; plants: Plant[]; storageLocations: StorageLocation[]; materialTypes: MaterialTypeMap[]; numberSeriesBu?: NumberSeriesBuMap[]; materialGroups: MaterialGroupMap[];
   functions: string[]; actionTypes: string[]; persons: Person[]; categories: string[]; departments: string[]; stages: string[];
 }
 
-export interface Filter { bu: string; plant: string; cat: string; status: string; dept: string; q: string; }
+export interface Filter { bu: string; plant: string; cat: string; status: string; dept: string; loc?: string; q: string; }
 
 /** Active master records for the sidebar — served by GET /api/masters/sidebar. */
 export interface PlantSidebarItem { id: number; code: string | null; name: string; active: boolean; order: number; buCode: string; city?: string | null; }

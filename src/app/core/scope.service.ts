@@ -10,7 +10,7 @@ export class ScopeService {
   private auth = inject(AuthService);
   readonly masters = signal<Masters | null>(null);
   readonly settings = signal<Record<string, string>>({});
-  readonly filter = signal<Filter>({ bu: 'All', plant: 'All', cat: 'All', status: 'All', dept: 'All', q: '' });
+  readonly filter = signal<Filter>({ bu: 'All', plant: 'All', cat: 'All', status: 'All', dept: 'All', loc: 'All', q: '' });
   readonly version = signal(0);   // bump to make pages reload
 
   readonly thresholds = computed<Thresholds>(() => {
@@ -105,7 +105,7 @@ export class ScopeService {
   }
   unitsOf(bu: string): string[] { return this.activePlants().filter(p => p.buCode === bu).map(p => p.name); }
   set(patch: Partial<Filter>) { this.filter.update(f => ({ ...f, ...patch })); }
-  goScope(bu: string, plant = 'All') { this.set({ bu, plant }); }
+  goScope(bu: string, plant = 'All', loc = 'All') { this.set({ bu, plant, loc }); }
   refresh() { this.version.update(v => v + 1); }
   title(): string {
     const f = this.filter(), l = this.level();

@@ -193,7 +193,8 @@ export class MastersComponent {
       cols: [
         { k: 'code', l: 'Business unit', req: true, key: true },
         { k: 'name', l: 'Description', req: true },
-        { k: 'alias', l: 'Also known as (e.g. OSD)' }
+        { k: 'alias', l: 'Also known as (e.g. OSD)' },
+        { k: 'active', l: 'Active', type: 'check' }
       ]
     },
     {
@@ -211,44 +212,63 @@ export class MastersComponent {
     {
       id: 'slocs', label: 'Storage Locations (SAP)', ic: 'archive', table: true, sapReset: true, url: '/masters/storage-locations', idOf: r => r.id,
       desc: 'SAP storage locations (LGORT). Codes are translated to descriptions on import. Some codes are used with different meanings in different plants (e.g. FG01, PM01, RM01) — set the Plant column to make the match plant-specific.',
-      blank: () => ({ code: '', name: '', storageType: 'General', plantName: '', _new: true }),
+      blank: () => ({ code: '', name: '', storageType: 'General', plantName: '', active: true, _new: true }),
       cols: [
         { k: 'code', l: 'SAP SLoc code' },
         { k: 'name', l: 'Description', req: true },
         { k: 'storageType', l: 'Storage type', type: 'select', opts: () => this.slocTypeOpts },
-        { k: 'plantName', l: 'Plant (blank = all)', type: 'select', opts: () => this.plantOpts() }
+        { k: 'plantName', l: 'Plant (blank = all)', type: 'select', opts: () => this.plantOpts() },
+        { k: 'active', l: 'Active', type: 'check' }
       ]
     },
     {
       id: 'mtypes', label: 'Material Types (SAP)', ic: 'box', table: true, sapReset: true, url: '/masters/material-types', idOf: r => r.sapCode,
       desc: 'SAP material types (MTART) with Unichem number series, mapped to the six dashboard categories. “Exclude” keeps non-inventory types (capital goods, services, scrap, non-valuated) out of the dashboard. Default department applies to consumables when the material group does not decide it.',
-      blank: () => ({ sapCode: '', description: '', numberSeries: '', category: 'Raw Material', businessUnit: '', department: '', _new: true }),
+      blank: () => ({ sapCode: '', description: '', numberSeries: '', category: 'Raw Material', businessUnit: '', department: '', active: true, _new: true }),
       cols: [
         { k: 'sapCode', l: 'Material type', req: true, key: true },
         { k: 'description', l: 'Description' },
         { k: 'numberSeries', l: 'Number series' },
         { k: 'category', l: 'Dashboard category', type: 'select', opts: () => this.catOpts },
         { k: 'businessUnit', l: 'Business Unit', type: 'select', opts: () => ['', ...this.buCodes()] },
-        { k: 'department', l: 'Default department', type: 'select', opts: () => this.deptOpts }
+        { k: 'department', l: 'Default department', type: 'select', opts: () => this.deptOpts },
+        { k: 'active', l: 'Active', type: 'check' }
+      ]
+    },
+    {
+      id: 'numseries', label: 'Number Series by BU', ic: 'hash', table: true, url: '/masters/number-series-bu', idOf: r => r.id,
+      desc: 'Configure which material category should be used for each material number series and Business Unit.',
+      blank: () => ({ seriesPattern: '', businessUnit: this.buCodes()[0] || 'API', category: 'Raw Material', department: 'All', description: '', active: true, sortOrder: 99, _new: true }),
+      cols: [
+        { k: 'seriesPattern', l: 'Number Series', req: true, key: true },
+        { k: 'businessUnit', l: 'Business Unit', req: true, type: 'select', opts: () => this.buCodes() },
+        { k: 'category', l: 'Category in this BU', req: true, type: 'select', opts: () => this.catOpts },
+        { k: 'department', l: 'Department', type: 'select', opts: () => ['', 'All', ...this.deptOpts] },
+        { k: 'description', l: 'Description / Purpose' },
+        { k: 'active', l: 'Active', type: 'check' }
       ]
     },
     {
       id: 'mgroups', label: 'Material Groups (SAP)', ic: 'users', table: true, sapReset: true, url: '/masters/material-groups', idOf: r => r.sapCode,
       desc: 'SAP material groups (MATKL). For consumables the group decides the department (Production, Engineering, QC, EHS, Other — no other departments without approval) and sub-category. The category column is used only when the material type does not decide it.',
-      blank: () => ({ sapCode: '', description: '', category: '', department: '', subCategory: '', _new: true }),
+      blank: () => ({ sapCode: '', description: '', category: '', department: '', subCategory: '', active: true, _new: true }),
       cols: [
         { k: 'sapCode', l: 'Material group', req: true, key: true },
         { k: 'description', l: 'Description' },
         { k: 'category', l: 'Category (fallback)', type: 'select', opts: () => this.catFallbackOpts },
         { k: 'department', l: 'Department', type: 'select', opts: () => this.deptOpts },
-        { k: 'subCategory', l: 'Sub-category' }
+        { k: 'subCategory', l: 'Sub-category' },
+        { k: 'active', l: 'Active', type: 'check' }
       ]
     },
     {
       id: 'functions', label: 'Responsible Functions', ic: 'sliders', table: true, list: true,
       desc: 'Functions that can own actions.',
-      blank: () => ({ v: '', _new: true }),
-      cols: [{ k: 'v', l: 'Function', req: true }]
+      blank: () => ({ v: '', active: true, _new: true }),
+      cols: [
+        { k: 'v', l: 'Function', req: true },
+        { k: 'active', l: 'Active', type: 'check' }
+      ]
     },
     {
       id: 'persons', label: 'Responsible Persons', ic: 'users', table: true, url: '/masters/persons', idOf: r => r.id,
@@ -263,8 +283,11 @@ export class MastersComponent {
     {
       id: 'acttypes', label: 'Action Types', ic: 'check', table: true, list: true,
       desc: 'Corrective action types offered when assigning an action.',
-      blank: () => ({ v: '', _new: true }),
-      cols: [{ k: 'v', l: 'Action type', req: true }]
+      blank: () => ({ v: '', active: true, _new: true }),
+      cols: [
+        { k: 'v', l: 'Action type', req: true },
+        { k: 'active', l: 'Active', type: 'check' }
+      ]
     },
     {
       id: 'contacts', label: 'Notification Contacts', ic: 'users', table: true,
@@ -348,14 +371,15 @@ export class MastersComponent {
     } catch {}
 
     const r: Record<string, any[]> = {
-      bus: (m.businessUnits ?? []).map((x: any) => ({ ...x, _origCode: x.code, _new: false })),
-      plants: (m.plants ?? []).map((x: any) => ({ ...x, _origName: x.name, _new: false })),
-      slocs: (m.storageLocations ?? []).map((x: any) => ({ ...x, _new: false })),
-      mtypes: (m.materialTypes ?? []).map((x: any) => ({ ...x, _origSapCode: x.sapCode, _new: false })),
-      mgroups: (m.materialGroups ?? []).map((x: any) => ({ ...x, _origSapCode: x.sapCode, _new: false })),
-      functions: (m.functions ?? []).map((v: string) => ({ v, _new: false })),
+      bus: (m.businessUnits ?? []).map((x: any) => ({ ...x, active: x.active !== false, _origCode: x.code, _new: false })),
+      plants: (m.plants ?? []).map((x: any) => ({ ...x, active: x.active !== false, _origName: x.name, _new: false })),
+      slocs: (m.storageLocations ?? []).map((x: any) => ({ ...x, active: x.active !== false, _new: false })),
+      mtypes: (m.materialTypes ?? []).map((x: any) => ({ ...x, active: x.active !== false, _origSapCode: x.sapCode, _new: false })),
+      numseries: (m.numberSeriesBu ?? []).map((x: any) => ({ ...x, active: x.active !== false, _new: false })),
+      mgroups: (m.materialGroups ?? []).map((x: any) => ({ ...x, active: x.active !== false, _origSapCode: x.sapCode, _new: false })),
+      functions: (m.functions ?? []).map((x: any) => typeof x === 'string' ? ({ v: x, active: true, _new: false }) : ({ v: x.name || x.v, active: x.active !== false, _new: false })),
       persons: (m.persons ?? []).map((x: any) => ({ ...x, _new: false })),
-      acttypes: (m.actionTypes ?? []).map((v: string) => ({ v, _new: false })),
+      acttypes: (m.actionTypes ?? []).map((x: any) => typeof x === 'string' ? ({ v: x, active: true, _new: false }) : ({ v: x.name || x.v, active: x.active !== false, _new: false })),
       contacts: contacts.map(x => ({ ...x, _new: false }))
     };
     this.rows.set(r);
@@ -424,11 +448,11 @@ export class MastersComponent {
     return (this.rows()[id] ?? []).length;
   }
 
-  buCodes = computed<string[]>(() => (this.rows()['bus'] ?? []).map(b => b.code).filter(Boolean));
+  buCodes = computed<string[]>(() => (this.rows()['bus'] ?? []).filter(b => b.active !== false).map(b => b.code).filter(Boolean));
 
-  plantNames = computed<string[]>(() => (this.rows()['plants'] ?? []).map(p => p.name).filter(Boolean));
+  plantNames = computed<string[]>(() => (this.rows()['plants'] ?? []).filter(p => p.active !== false).map(p => p.name).filter(Boolean));
 
-  functionNames = computed<string[]>(() => (this.rows()['functions'] ?? []).map(f => f.v).filter(Boolean));
+  functionNames = computed<string[]>(() => (this.rows()['functions'] ?? []).filter(f => f.active !== false).map(f => f.v).filter(Boolean));
 
   plantOpts = computed<string[]>(() => ['', ...this.plantNames()]);
 
@@ -503,10 +527,76 @@ export class MastersComponent {
     return this.mtypeDuplicateRows().has(row);
   }
 
+  /**
+   * Duplicate validation for Number Series by BU master:
+   * (seriesPattern + businessUnit) must be unique among ACTIVE mappings.
+   */
+  numSeriesDuplicateRows = computed(() => {
+    const list = this.rows()['numseries'] ?? [];
+    const counts = new Map<string, number>();
+    for (const r of list) {
+      if (r.active === false) continue;
+      const pattern = String(r.seriesPattern ?? '').trim().toLowerCase();
+      const bu = String(r.businessUnit ?? '').trim().toLowerCase();
+      if (!pattern || !bu) continue;
+      const key = `${pattern}|${bu}`;
+      counts.set(key, (counts.get(key) || 0) + 1);
+    }
+    const dupSet = new Set<any>();
+    for (const r of list) {
+      if (r.active === false) continue;
+      const pattern = String(r.seriesPattern ?? '').trim().toLowerCase();
+      const bu = String(r.businessUnit ?? '').trim().toLowerCase();
+      if (!pattern || !bu) continue;
+      const key = `${pattern}|${bu}`;
+      if ((counts.get(key) || 0) > 1) {
+        dupSet.add(r);
+      }
+    }
+    return dupSet;
+  });
+
+  hasNumSeriesDuplicates = computed(() => this.numSeriesDuplicateRows().size > 0);
+
+  duplicateNumSeriesSummaries = computed<string[]>(() => {
+    const list = this.rows()['numseries'] ?? [];
+    const counts = new Map<string, { pattern: string; bu: string; count: number }>();
+    for (const r of list) {
+      if (r.active === false) continue;
+      const pattern = String(r.seriesPattern ?? '').trim();
+      const bu = String(r.businessUnit ?? '').trim();
+      if (!pattern || !bu) continue;
+      const key = `${pattern.toLowerCase()}|${bu.toLowerCase()}`;
+      const existing = counts.get(key);
+      if (existing) {
+        existing.count++;
+      } else {
+        counts.set(key, { pattern, bu, count: 1 });
+      }
+    }
+    const summaries: string[] = [];
+    counts.forEach(({ pattern, bu, count }) => {
+      if (count > 1) {
+        summaries.push(`'${pattern}' for BU '${bu}'`);
+      }
+    });
+    return summaries;
+  });
+
+  isNumSeriesDuplicateRow(row: any): boolean {
+    return this.numSeriesDuplicateRows().has(row);
+  }
+
   isDuplicateCell(def: MasterDef, row: any, colKey: string): boolean {
-    if (def.id !== 'mtypes') return false;
-    if (colKey !== 'sapCode' && colKey !== 'category' && colKey !== 'businessUnit') return false;
-    return this.isMtypeDuplicateRow(row);
+    if (def.id === 'mtypes') {
+      if (colKey !== 'sapCode' && colKey !== 'category' && colKey !== 'businessUnit') return false;
+      return this.isMtypeDuplicateRow(row);
+    }
+    if (def.id === 'numseries') {
+      if (colKey !== 'seriesPattern' && colKey !== 'businessUnit') return false;
+      return this.isNumSeriesDuplicateRow(row);
+    }
+    return false;
   }
 
   filteredRows(id: string): any[] {
@@ -625,6 +715,11 @@ export class MastersComponent {
       const bu = String(row.businessUnit ?? '').trim();
       const buPart = bu ? ` and Business Unit "${bu}"` : ' and Business Unit "— all —"';
       this.toast.show(`Duplicate entry: Material Type "${code}" already exists with Dashboard Category "${cat}"${buPart}.`);
+      return;
+    }
+
+    if (def.id === 'numseries' && this.isNumSeriesDuplicateRow(row)) {
+      this.toast.show('An active mapping already exists for this Number Series and Business Unit.');
       return;
     }
 
@@ -830,6 +925,11 @@ export class MastersComponent {
         ['ERSA', 'Spare Parts', '', 'Consumable', bu, 'Engineering'],
         ['ROH', 'Raw Material', '10000000', 'Raw Material', bu, 'Production'],
         ['VERP', 'Packaging', '50000000', 'Packing Material', bu, 'Production']
+      ];
+    } else if (def.id === 'numseries') {
+      sampleRows = [
+        ['100*', 'API', 'Finished Goods', 'All', 'API 100-series Finished Goods', 'Yes'],
+        ['100*', 'Formulation', 'Raw Material', 'All', 'Formulation 100-series Raw Material', 'Yes']
       ];
     } else {
       sampleRows = [
@@ -1096,6 +1196,12 @@ export class MastersComponent {
       return;
     }
 
+    // Check duplicate Number Series by BU entries
+    if (this.hasNumSeriesDuplicates()) {
+      this.toast.show('Cannot save masters: An active mapping already exists for this Number Series and Business Unit.');
+      return;
+    }
+
     // Default blank Business Unit description to its code if needed
     const busList = this.rows()['bus'] ?? [];
     busList.forEach(b => {
@@ -1180,11 +1286,19 @@ export class MastersComponent {
 
     // 3. Lists (functions & actionTypes)
     if (this.dirtyLists.has('functions')) {
-      const fns = (this.rows()['functions'] ?? []).map(x => String(x.v || '').trim()).filter(Boolean);
+      const fns = (this.rows()['functions'] ?? []).filter(x => String(x.v || '').trim()).map(x => ({
+        v: String(x.v || '').trim(),
+        name: String(x.v || '').trim(),
+        active: x.active !== false
+      }));
       if (fns.length) otherCalls.push(this.api.put('/masters/lists/functions', fns));
     }
     if (this.dirtyLists.has('acttypes')) {
-      const acts = (this.rows()['acttypes'] ?? []).map(x => String(x.v || '').trim()).filter(Boolean);
+      const acts = (this.rows()['acttypes'] ?? []).filter(x => String(x.v || '').trim()).map(x => ({
+        v: String(x.v || '').trim(),
+        name: String(x.v || '').trim(),
+        active: x.active !== false
+      }));
       if (acts.length) otherCalls.push(this.api.put('/masters/lists/actionTypes', acts));
     }
 

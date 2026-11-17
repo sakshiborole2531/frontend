@@ -1,4 +1,4 @@
-@if (d(); as d) {
+﻿@if (d(); as d) {
 <div class="hero lvl-{{ d.level }}">
   <div class="hero-l">
     <div class="hero-eb"><span class="lvlchip">{{ d.level === 'org' ? 'Entire Organization' : d.level === 'bu' ? 'Business Unit' : 'Unit' }}</span>
@@ -13,18 +13,110 @@
   </div>
 </div>
 
-<div class="kidwrap"><div class="kidtitle">{{ d.level === 'org' ? 'Business Units' : d.level === 'bu' ? 'Units in ' + d.bu : 'Storage locations in ' + d.plant }}<span>{{ d.level === 'unit' ? 'value by location' : 'click to drill down' }}</span></div>
-  <div class="kids" [class.few]="d.children.length <= 3">
-    @for (k of d.children; track k.key; let i = $index) {
-      <div class="kid c{{ i % 6 }}" (click)="kid(k)">
-        <div class="kidh"><span class="kidic"><ic [n]="k.kind === 'bu' ? 'factory' : k.kind === 'unit' ? 'place' : 'archive'"/></span><div><b>{{ k.key }}{{ k.kind === 'bu' ? ' Business Unit' : '' }}</b><span>{{ k.sub }}</span></div>@if (k.kind !== 'loc') {<span class="kidgo">›</span>}</div>
-        <div class="kidv">{{ k.agg.v | inr }}<small>{{ pctT(k.agg.v) }}</small></div>
-        <div class="kidbar"><i class="c-u" [style.width.%]="w(k.agg.u, k.agg.v)"></i><i class="c-q" [style.width.%]="w(k.agg.q, k.agg.v)"></i><i class="c-b" [style.width.%]="w(k.agg.b, k.agg.v)"></i></div>
-        <div class="kidm"><span><em>Aged</em>{{ k.agg.aged | inr }}</span><span><em>Expiring</em>{{ k.agg.exp + k.agg.expd | inr }}</span><span><em>Blocked</em>{{ k.agg.b | inr }}</span>
-          @if (k.kind !== 'loc') {<span><em>Actions</em>{{ k.open }}@if (k.overdue) {<b class="down"> · {{ k.overdue }} late</b>}</span>} @else {<span><em>Batches</em>{{ k.agg.n }}</span>}</div>
+
+<div class="kidwrap">
+  <div class="kidtitle">
+    {{ d.level === 'org' ? 'Business Units' : d.level === 'bu' ? 'Units in ' + d.bu : 'Storage locations in ' + d.plant }}
+    <span>{{ d.level === 'unit' ? (selectedLocChild() ? 'showing selected location' : 'value by location · click to filter') : 'click to drill down' }}</span>
+  </div>
+
+  @if (d.level === 'unit' && selectedLocChild(); as selK) {
+    <!-- Single prominent focused card/row for selected storage location -->
+    <div class="selected-loc-focus c0">
+      <div class="slf-top">
+        <div class="slf-title-row">
+          <div class="slf-identity">
+            <span class="kidic"><ic n="archive" [size]="18"/></span>
+            <div>
+              <div class="slf-name-group">
+                <span class="slf-tag">Active Storage Location</span>
+                <b>{{ selK.key }}</b>
+              </div>
+              <span class="slf-sub">Storage location in {{ d.plant }}</span>
+            </div>
+          </div>
+
+          <div class="slf-right-stats">
+            <div class="slf-val-box">
+              <span class="slf-val-lbl">Total Location Value</span>
+              <div class="kidv">{{ selK.agg.v | inr }}<small>{{ pctT(selK.agg.v) }}</small></div>
+            </div>
+            <button type="button" class="btn small secondary slf-reset-btn" (click)="clearLocFilter()" title="Clear selection and restore all storage locations">
+              <ic n="close" [size]="15"/> Deselect / View All Locations
+            </button>
+          </div>
+        </div>
+
+        <div class="kidbar"><i class="c-u" [style.width.%]="w(selK.agg.u, selK.agg.v)"></i><i class="c-q" [style.width.%]="w(selK.agg.q, selK.agg.v)"></i><i class="c-b" [style.width.%]="w(selK.agg.b, selK.agg.v)"></i></div>
+        <div class="kidm">
+          <span><em>Aged</em>{{ selK.agg.aged | inr }}</span>
+          <span><em>Expiring</em>{{ selK.agg.exp + selK.agg.expd | inr }}</span>
+          <span><em>Blocked</em>{{ selK.agg.b | inr }}</span>
+          <span><em>Batches</em>{{ selK.agg.n }}</span>
+        </div>
       </div>
-    } @empty { <div class="empty">No data at this level — import inventory or load sample data (Configuration → Import / Export).</div> }
-  </div></div>
+
+      @let detail = locExpandedDetails(selK.key);
+      <div class="kid-expand-body">
+        <div class="kid-expand-header">
+          <span><b>{{ selK.key }}</b> Category Breakdown</span>
+          <span class="kid-expand-summary">{{ detail.materialsCount }} materials · {{ detail.batchesCount }} batches</span>
+        </div>
+
+        @if (detail.cats.length > 0) {
+          <div class="kid-cat-chips">
+            @for (c of detail.cats; track c.cat) {
+              <div class="kid-cat-chip" (click)="go('/inventory/goods', { cat: c.cat, loc: selK.key })" [title]="'View ' + c.cat + ' in ' + selK.key">
+                <span class="kcc-tag">{{ c.short }}</span>
+                <span class="kcc-val">{{ c.v | inr }}</span>
+                <span class="kcc-pct">({{ c.pct }}%)</span>
+              </div>
+            }
+          </div>
+        }
+
+        <div class="kid-expand-kpis">
+          <span [class.warn]="detail.agedCount > 0"><em>Aged (>{{ t().agingDays }}d):</em> <b>{{ detail.agedCount }}</b></span>
+          <span [class.bad]="detail.expCount > 0"><em>Expiry (≤{{ t().expiryDays }}d):</em> <b>{{ detail.expCount }}</b></span>
+          <span [class.warn]="detail.blockedCount > 0"><em>Blocked/QC:</em> <b>{{ detail.blockedCount }}</b></span>
+        </div>
+
+        <div class="kid-expand-actions">
+          <button type="button" class="btn small primary" (click)="go('/inventory/goods', { loc: selK.key })">View in Inventory Register ›</button>
+          <button type="button" class="btn small secondary" (click)="clearLocFilter()">Deselect Location</button>
+        </div>
+      </div>
+    </div>
+  } @else {
+    <!-- Full grid of storage locations / child cards -->
+    <div class="kids" [class.few]="d.children.length <= 3">
+      @for (k of d.children; track k.key; let i = $index) {
+        <div class="kid c{{ i % 6 }}" [class.on]="k.kind === 'loc' && scope.filter().loc === k.key" [class.sel]="k.kind === 'loc' && scope.filter().loc === k.key" [attr.data-gloc]="k.kind === 'loc' ? k.key : null" (click)="kid(k)">
+          <div class="kidh">
+            <span class="kidic"><ic [n]="k.kind === 'bu' ? 'factory' : k.kind === 'unit' ? 'place' : 'archive'"/></span>
+            <div><b>{{ k.key }}{{ k.kind === 'bu' ? ' Business Unit' : '' }}</b><span>{{ k.sub }}</span></div>
+            @if (k.kind === 'loc') {
+              <span class="kidexpand-icon" title="Click to focus on this storage location">
+                <ic n="arrow_forward" [size]="16"/>
+              </span>
+            } @else {
+              <span class="kidgo">›</span>
+            }
+          </div>
+          <div class="kidv">{{ k.agg.v | inr }}<small>{{ pctT(k.agg.v) }}</small></div>
+          <div class="kidbar"><i class="c-u" [style.width.%]="w(k.agg.u, k.agg.v)"></i><i class="c-q" [style.width.%]="w(k.agg.q, k.agg.v)"></i><i class="c-b" [style.width.%]="w(k.agg.b, k.agg.v)"></i></div>
+          <div class="kidm">
+            <span><em>Aged</em>{{ k.agg.aged | inr }}</span>
+            <span><em>Expiring</em>{{ k.agg.exp + k.agg.expd | inr }}</span>
+            <span><em>Blocked</em>{{ k.agg.b | inr }}</span>
+            @if (k.kind !== 'loc') {<span><em>Actions</em>{{ k.open }}@if (k.overdue) {<b class="down"> · {{ k.overdue }} late</b>}</span>} @else {<span><em>Batches</em>{{ k.agg.n }}</span>}
+          </div>
+        </div>
+      }
+      @empty { <div class="empty">No data at this level — import inventory or load sample data (Configuration → Import / Export).</div> }
+    </div>
+  }
+</div>
 
 <filter-bar/>
 
@@ -108,7 +200,7 @@
 
 <div class="dsec"><span class="dsn">4</span><div><h3>{{ d.level === 'org' ? 'Business Unit-wise comparison' : d.level === 'bu' ? 'Unit-wise comparison — ' + d.bu : 'Storage-location position — ' + d.plant }}</h3><p>Click a row to drill down.</p></div></div>
 <div class="panel"><div class="tablewrap" style="max-height:none"><table><thead><tr><th>{{ d.level === 'org' ? 'Business unit' : d.level === 'bu' ? 'Unit' : 'Location' }}</th><th class="num">Batches</th><th class="num">Total value</th><th class="num">Share</th><th class="num">Unrestricted</th><th class="num">Quality</th><th class="num">Blocked</th><th class="num">Aged</th><th class="num">Expiry ≤{{ t().expiryDays }}d</th><th class="num">Expired</th><th class="num">Exceptions</th><th class="num">Open / overdue</th></tr></thead><tbody>
-  @for (k of d.children; track k.key) { <tr (click)="kid(k)" style="cursor:pointer"><td><b>{{ k.key }}</b></td><td class="num">{{ k.agg.n }}</td><td class="num"><b>{{ k.agg.v | inr }}</b></td><td class="num">{{ pctT(k.agg.v) }}</td><td class="num">{{ k.agg.u | inr }}</td><td class="num">{{ k.agg.q | inr }}</td><td class="num" style="color:var(--red)">{{ k.agg.b | inr }}</td><td class="num">{{ k.agg.aged | inr }}</td><td class="num">{{ k.agg.exp | inr }}</td><td class="num">{{ k.agg.expd | inr }}</td><td class="num">{{ k.agg.exc }}</td><td class="num">{{ k.open }} / <span style="color:var(--red)">{{ k.overdue }}</span></td></tr> }
+  @for (k of d.children; track k.key) { <tr (click)="kid(k)" style="cursor:pointer" [class.on]="k.kind === 'loc' && scope.filter().loc === k.key" [class.sel]="k.kind === 'loc' && scope.filter().loc === k.key"><td><b>{{ k.key }}</b></td><td class="num">{{ k.agg.n }}</td><td class="num"><b>{{ k.agg.v | inr }}</b></td><td class="num">{{ pctT(k.agg.v) }}</td><td class="num">{{ k.agg.u | inr }}</td><td class="num">{{ k.agg.q | inr }}</td><td class="num" style="color:var(--red)">{{ k.agg.b | inr }}</td><td class="num">{{ k.agg.aged | inr }}</td><td class="num">{{ k.agg.exp | inr }}</td><td class="num">{{ k.agg.expd | inr }}</td><td class="num">{{ k.agg.exc }}</td><td class="num">{{ k.open }} / <span style="color:var(--red)">{{ k.overdue }}</span></td></tr> }
   <tr class="totrow"><td>Total — {{ scope.title() }}</td><td class="num">{{ tot().n }}</td><td class="num">{{ tot().v | inr }}</td><td class="num">100%</td><td class="num">{{ tot().u | inr }}</td><td class="num">{{ tot().q | inr }}</td><td class="num">{{ tot().b | inr }}</td><td class="num">{{ tot().aged | inr }}</td><td class="num">{{ tot().exp | inr }}</td><td class="num">{{ tot().expd | inr }}</td><td class="num">{{ tot().exc }}</td><td class="num">{{ d.pipeline.open }} / {{ d.pipeline.overdue }}</td></tr>
 </tbody></table></div></div>
 
