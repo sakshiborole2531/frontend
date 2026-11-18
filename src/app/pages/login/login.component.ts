@@ -21,6 +21,11 @@ export class LoginComponent {
   error = signal(''); busy = signal(false); company = signal('Unichem Laboratories Ltd.');
   msg = inject(ActivatedRoute).snapshot.queryParamMap.get('reason');
   bus = signal<string[]>([]);
+  showPassword = signal(false);
+
+  togglePasswordVisibility() {
+    this.showPassword.update(v => !v);
+  }
 
   login = this.fb.nonNullable.group({ username: ['', Validators.required], password: ['', Validators.required] });
   setup = this.fb.nonNullable.group({

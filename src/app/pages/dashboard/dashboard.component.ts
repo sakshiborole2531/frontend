@@ -48,6 +48,9 @@ export class DashboardComponent {
 
   t() { return this.d()?.thresholds ?? this.scope.thresholds(); }
   tot() { return this.d()?.totals ?? {}; }
+  unrestrictedBatchesCount = computed(() => this.tot().uN ?? this.items().filter(x => x.unrestrictedQty > 0).length);
+  qualityBatchesCount = computed(() => this.tot().qN ?? this.items().filter(x => x.qualityQty > 0).length);
+  blockedBatchesCount = computed(() => this.tot().bN ?? this.items().filter(x => x.blockedQty > 0).length);
   fefo(x: CalcItem): string { return this.d()?.fefoStatus?.[x.id] ?? 'NA'; }
   pctT(v: number) { const t = this.tot().v; return t ? (v / t * 100).toFixed(1) + '%' : '0%'; }
   w(v: number, base: number) { return base ? v / base * 100 : 0; }

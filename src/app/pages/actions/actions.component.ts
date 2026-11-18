@@ -18,6 +18,7 @@ import { UI } from '../../shared/ui';
 /** Action Centre: exceptions awaiting ownership, open action register, closed actions. */
 @Component({ standalone: true, imports: [FormsModule, RouterLink, MatTableModule, MatPaginatorModule, ...UI], templateUrl: './actions.component.html' })
 export class ActionsComponent {
+  fnName(f: any): string { return (f && typeof f === 'object') ? (f.name || '') : String(f || ''); }
   api = inject(ApiService); auth = inject(AuthService); scope = inject(ScopeService); private dlg = inject(MatDialog);
   private toast = inject(ToastService); private router = inject(Router); private route = inject(ActivatedRoute);
   view = input<'queue' | 'open' | 'closed'>('queue');

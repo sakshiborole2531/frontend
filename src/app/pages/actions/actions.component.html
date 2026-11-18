@@ -43,7 +43,7 @@
 <div class="panel"><h2>Action Register</h2><div class="desc">Action plan, target date, responsible function / person and escalation</div>
   <div class="toolbar">
     @if (view() === 'open') { <div class="fgroup"><label>Stage</label><select [ngModel]="stage()" (ngModelChange)="filter({ stage: $event })">@for (s of ['Open','All','Prioritized','Owned','In Action']; track s) {<option>{{ s }}</option>}</select></div> }
-    <div class="fgroup"><label>Function</label><select [ngModel]="fn()" (ngModelChange)="filter({ fn: $event })"><option>All</option>@for (f of scope.masters()?.functions ?? []; track f) {<option>{{ f }}</option>}</select></div>
+    <div class="fgroup"><label>Function</label><select [ngModel]="fn()" (ngModelChange)="filter({ fn: $event })"><option>All</option>@for (f of scope.masters()?.functions ?? []; track fnName(f)) {<option [value]="fnName(f)">{{ fnName(f) }}</option>}</select></div>
     <div class="fgroup"><label>Due</label><select [ngModel]="due()" (ngModelChange)="filter({ due: $event })"><option value="All">All</option><option value="Overdue">Overdue</option><option value="Due7">Due within 7 days</option><option value="ClosedMTD">Closed this month</option></select></div>
     <span class="hint">{{ register().length }} actions</span><span class="spacer"></span>
     @if (auth.can('action.create')) {<button class="btn small" (click)="newFree()">+ New action</button>}</div>

@@ -24,7 +24,7 @@ import { ScopeService } from '../../core/scope.service';
       <div class="fgroup"><label>Department</label><input type="text" formControlName="department"></div>
       <div class="fgroup"><label>Location</label><input type="text" formControlName="location"></div>
       <div class="fgroup"><label>Role *</label><select formControlName="role">@for (r of data.roles; track r.code) {<option [value]="r.code">{{ r.label }}</option>}</select></div>
-      <div class="fgroup"><label>Function (own actions)</label><select formControlName="functionName"><option value="">â€”</option>@for (fn of scope.masters()?.functions ?? []; track fn) {<option [value]="fn">{{ fn }}</option>}</select></div>
+      <div class="fgroup"><label>Function (own actions)</label><select formControlName="functionName"><option value="">—</option>@for (fn of scope.masters()?.functions ?? []; track fnName(fn)) {<option [value]="fnName(fn)">{{ fnName(fn) }}</option>}</select></div>
       <div class="fgroup"><label>Account valid until</label><input type="date" formControlName="validUntil"></div>
       <div class="fgroup"><label>Status</label><select formControlName="active"><option [ngValue]="true">Active</option><option [ngValue]="false">Inactive</option></select></div>
       <div class="fgroup full"><label>Data access</label>
@@ -72,7 +72,8 @@ export class UserFormDialog {
     }
     if (this.self) ['role', 'functionName', 'validUntil', 'active', 'scopeAll'].forEach(k => this.f.get(k)?.disable());
   }
-  bad(k: string) { const c = this.f.get(k); return !!c && c.invalid && c.touched; }
+  fnName(fn: any): string { return (fn && typeof fn === 'object') ? (fn.name || '') : String(fn || ''); }
+    bad(k: string) { const c = this.f.get(k); return !!c && c.invalid && c.touched; }
   tog(s: Set<string>, v: string) { s.has(v) ? s.delete(v) : s.add(v); }
   setGrant(p: string, mode: string) { if (!mode) delete this.grants[p]; else this.grants[p] = { mode, until: this.grants[p]?.until || '' }; }
   setUntil(p: string, until: string) { if (this.grants[p]) this.grants[p].until = until; }
