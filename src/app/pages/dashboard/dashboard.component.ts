@@ -132,7 +132,16 @@ export class DashboardComponent {
       all: () => true, aged: x => (x.age !== null && x.age > t.agingDays) || x.movement !== 'Normal', blocked: x => x.blockedQty > 0 || x.qualityQty > 0,
       expiry: x => x.rsl !== null && x.rsl <= t.expiryDays, hv: x => x.value >= t.highValue, fefo: x => this.fefo(x) === 'FAIL'
     };
-    this.ds.data = this.items().filter(x => (f[tab] ?? f['all'])(x) && (!q || [x.plant, x.code, x.batch, x.name, x.storageLoc, x.matType].join(' ').toLowerCase().includes(q)))
+    const curF = this.scope.filter();
+    this.ds.data = this.items().filter(x => {
+      if (!(f[tab] ?? f['all'])(x)) return false;
+      if (curF.loc && curF.loc !== 'All' && x.storageLoc !== curF.loc) return false;
+      if (curF.minValue != null && x.value < curF.minValue) return false;
+      if (curF.from && (!x.receiptDate || x.receiptDate < curF.from)) return false;
+      if (curF.to && (!x.receiptDate || x.receiptDate > curF.to)) return false;
+      if (q && ![x.plant, x.code, x.batch, x.name, x.storageLoc, x.matType].join(' ').toLowerCase().includes(q)) return false;
+      return true;
+    })
       .sort((a, b) => b.value - a.value);
   }
   setTab(t: string) { this.regTab.set(t); this.applyReg(); }

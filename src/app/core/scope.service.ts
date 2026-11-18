@@ -10,7 +10,7 @@ export class ScopeService {
   private auth = inject(AuthService);
   readonly masters = signal<Masters | null>(null);
   readonly settings = signal<Record<string, string>>({});
-  readonly filter = signal<Filter>({ bu: 'All', plant: 'All', cat: 'All', status: 'All', dept: 'All', loc: 'All', q: '' });
+  readonly filter = signal<Filter>({ bu: 'All', plant: 'All', cat: 'All', status: 'All', dept: 'All', loc: 'All', q: '', minValue: undefined, from: '', to: '' });
   readonly version = signal(0);   // bump to make pages reload
 
   readonly thresholds = computed<Thresholds>(() => {

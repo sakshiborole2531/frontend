@@ -43,7 +43,7 @@ export interface Masters {
   functions: string[]; actionTypes: string[]; persons: Person[]; categories: string[]; departments: string[]; stages: string[];
 }
 
-export interface Filter { bu: string; plant: string; cat: string; status: string; dept: string; loc?: string; q: string; }
+export interface Filter { bu: string; plant: string; cat: string; status: string; dept: string; loc?: string; q: string; minValue?: number; from?: string; to?: string; }
 
 /** Active master records for the sidebar — served by GET /api/masters/sidebar. */
 export interface PlantSidebarItem { id: number; code: string | null; name: string; active: boolean; order: number; buCode: string; city?: string | null; }
